@@ -272,7 +272,7 @@
               link.className = 'resultLink'
               link.target = '_blank'
               document.querySelectorAll('.copyButton')[0].style.display='inline-block'
-              link.innerHTML = link.href = location.origin + '/shorty/?slug=' + data
+              link.innerHTML = link.href = location.origin + '/shorty/' + data
               resultDiv.innerHTML = 'your link<br><br>'
               resultDiv.appendChild(link)
               targetInput.value = ''
