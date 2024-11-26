@@ -1,0 +1,6 @@
+server {
+    listen 80;
+    listen 443 ssl;
+    server_name boss.mindhackers.org;
+    return 301 $scheme://boss.mindhackers.org/index.php?i=$request_uri;
+}

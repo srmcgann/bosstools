@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body, html{
+        margin: 0;
+        height: 100vh;
+        background: linear-gradient(-45deg, #300, #000);
+        overflow: hidden;
+      }
+      #c{
+        border: 3px solid #f004;
+        position: absolute;
+        background: #000;
+        left: 50%;
+        top: 50%;
+        border-radius: 10px;
+        transform: translate(-50%, -50%);
+      }
+      #button{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        border: none;
+        border-radius: 5px;
+        background: #40f;
+        color: #fff;
+        text-shadow: 2px 2px 2px #000;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 3px;
+        min-width: 50px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <button id="button">play</button>
+    <script>
+      c = document.querySelector('#c')
+      c.width = 1920
+      c.height = 1080
+      x = c.getContext('2d')
+      C = Math.cos
+      S = Math.sin
+      t = 0
+      T = Math.tan
+
+      rsz = window.onresize = () =>{
+        let b = document.body
+        let margin = 10
+        let n
+        let d = .5625
+        if(b.clientHeight/b.clientWidth > d){
+          c.style.width = `${(n=b.clientWidth) - margin*2}px`
+          c.style.height = `${n*d - margin*2}px`
+        }else{
+          c.style.height = `${(n=b.clientHeight) - margin*2}px`
+          c.style.width = `${n/d - margin*2}px`
+        }
+      }
+
+      rsz()
+
+      async function Draw(){
+        if(!t){
+          Rn = Math.random
+          
+          if(location.href.split('res=').length>1){
+            cscl = +location.href.split('res=')[1].split('&')[0]
+          }else{
+            cscl = 3
+          }
+          
+          c.width = 1920/	cscl
+          c.height = 1080 / cscl
+
+          url = location.href.split('url=')
+          if(url.length > 1){
+            url = url[1].split('&')[0]
+            if(url.toLowerCase().indexOf('.mp4') != -1 ||
+              url.toLowerCase().indexOf('.webm') != -1){
+              resType = 'video'
+              img = document.createElement('video')
+              loop = location.href.split('loop=')
+              if(loop.length > 1){
+                loop = loop[1].split('&')[0]
+                loop = loop == 'true'
+              }
+              playbackspeed = location.href.split('playbackspeed=')
+              if(playbackspeed.length > 1){
+                playbackspeed = playbackspeed[1].split('&')[0]
+              }else{
+                playbackspeed = 1
+              }
+              img.playbackRate = img.defaultPlaybackRate = +playbackspeed
+              autoplay = location.href.split('autoplay=')
+              await fetch(url).then(res=>res.blob()).then(data=>img.src = URL.createObjectURL(data))
+              if(autoplay.length > 1){
+                autoplay = autoplay[1].split('&')[0]
+              }
+            }else{
+               resType = 'image'
+               img = new Image()
+               await fetch(url).then(res=>res.blob()).then(data=>img.src = URL.createObjectURL(data))
+            }
+          }else{
+            resType = 'image'
+            img = new Image()
+            await fetch('https://cantelope42.github.io/cantelope.org/rotated/5dfeb44b3d6d416037dd06b44c127cb7_rotated.jpg').then(res=>res.blob()).then(data=>img.src = URL.createObjectURL(data))
+          }
+          
+          
+          buffer =  document.createElement('canvas')
+          bctx = buffer.getContext('2d', {willReadFrequently: true})
+          loaded = false
+          w = h = 1
+          iPv = 15
+          iPc = 3
+          P = Array(iPc).fill().map(v=>{
+            X = 0
+            Y = 0
+            vx = (Rn()-.5) * iPv
+            vy = (Rn()-.5) * iPv
+            return [X, Y, vx, vy]
+          })
+          img[resType == 'image' ? 'onload' : 'oncanplay'] = () => {
+            if(resType == 'image'){
+              loaded = true
+              w = img.width
+              h = img.height
+            }else{
+              if(playedOnce) return
+              w = img.videoWidth
+              h = img.videoHeight
+              if(loop) img.loop = true
+              if(autoplay == 'true'){
+                img.muted = true
+                img.play()
+                playedOnce = true
+                loaded = true
+                button.style.display='none'
+              }else{
+                img.muted = false
+                let button = document.querySelectorAll('#button')[0]
+                button.style.display='block'
+                button.onclick = () => {
+                  img.play()
+                  playedOnce = true
+                  loaded = true
+                  button.style.display='none'
+                }
+              }
+            }
+            if(w/h > 16/9){
+              scl = w/c.width
+            }else{
+              scl = h/c.height
+            }
+            w /= scl
+            h /= scl
+            w |= 0
+            h |= 0
+            buffer.width = w
+            buffer.height = h
+            P.map(v => {
+              v[0] = Rn() * w
+              v[1] = Rn() * h
+            })
+          }
+          
+          mx = my = 0
+          mv = false
+          playedOnce = false
+          window.onmousemove = e => {
+            rect = c.getBoundingClientRect()
+            mx = (e.pageX-rect.left) / c.clientWidth * c.width
+            my = (e.pageY-rect.top) / c.clientHeight * c.height
+          }
+          
+          
+          process = () => {
+            c.width = 1920/cscl | 0
+            c.height = 1080/cscl | 0
+            if(loaded)bctx.drawImage(img, 0, 0, buffer.width, buffer.height)
+            
+            l1 = bctx.getImageData(0,0,buffer.width,buffer.height)
+            l2 = bctx.createImageData(buffer.width,buffer.height)
+            data1 = l1.data
+            data2 = l2.data
+            mx2 = mx - c.width/2 + buffer.width/2
+            my2 = my - c.height/2 + buffer.height/2
+
+            P.map((v, i) => {
+              X = v[0] += v[2]
+              Y = v[1] += v[3]
+              if(X < 0 || X > w) v[2] *= -1
+              if(Y < 0 || Y > h) v[3] *= -1
+            })
+            
+            for(i=0; i<data1.length; i+=4){
+              red   = data1[i+0]
+              green = data1[i+1]
+              blue  = data1[i+2]
+              
+              j = i/4
+              X = j%w
+              Y = j/w|0
+              tx = ty = 0
+              P.map((v, i) => {
+                lx = v[0]
+                ly = v[1]
+                d = (5+(10+Math.hypot(a = lx-X, b = ly-Y)/2) /2)** 2 / 2
+                d = Math.max(200, d)
+                tx += X + a * 250 / d
+                ty += Y + b * 250 / d
+              })
+              d = (5+(10+Math.hypot(a = mx2-X, b = my2-Y)/2) /2)** 2 / 2
+              d = Math.max(200, d)
+              tx += X + a * 500 / d
+              ty += Y + b * 500 / d
+              tx /= (1+iPc)
+              ty /= (1+iPc)
+              tx=Math.max(0, Math.min(w-1, tx)) | 0
+              ty=Math.max(0, Math.min(h-1, ty)) | 0
+              tidx = Math.round(ty * w + tx) * 4
+              
+              //d2 = Math.hypot(mx2-X, my2-Y)
+              
+              red   = data1[tidx + 0] //- d2**2 /30 | 0
+              green = data1[tidx + 1] //- d2**2 /30 | 0
+              blue  = data1[tidx + 2] //- d2**2 /30 | 0
+              
+              data2[i+0] = red
+              data2[i+1] = green
+              data2[i+2] = blue
+              data2[i+3] = 255
+            }
+            
+            bctx.putImageData(l2, 0, 0)
+            
+            x.drawImage(buffer, c.width/2-buffer.width/2,c.height/2-buffer.height/2,buffer.width, buffer.height)
+          }
+        }
+
+        oX = 0
+        oY = 0
+        oZ = 16
+        Rl = 0
+        Pt = 0
+        Yw = 0
+
+        process()
+
+        t+=1/60
+        requestAnimationFrame(Draw)
+      }
+      Draw()
+    </script>
+  </body>
+</html>

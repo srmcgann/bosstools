@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>multiboard game!</title>
+    <style>
+body,html{
+  background: #000;
+  margin: 0;
+  height: 100vh;
+  font-family: courier;
+}
+#c{
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: #000;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+    </style>
+  </head>
+  <body>
+          <canvas id=c></canvas>
+	  <script>
+			c=document.querySelector('#c')
+c.width  = 1920
+c.height = 1080
+x=c.getContext('2d')
+S=Math.sin
+C=Math.cos
+Rn=Math.random
+R = function(r,g,b,a) {
+  a = a === undefined ? 1 : a;
+  return "rgba("+(r|0)+","+(g|0)+","+(b|0)+","+a+")";
+};
+t=go=0
+rsz=window.onresize=()=>{
+  setTimeout(()=>{
+    if(document.body.clientWidth > document.body.clientHeight*1.77777778){
+      c.style.height = '100vh'
+      setTimeout(()=>c.style.width = c.clientHeight*1.77777778+'px',0)
+    }else{
+      c.style.width = '100vw'
+      setTimeout(()=>c.style.height = c.clientWidth/1.77777778 + 'px',0)
+    }
+    c.width=1920
+    c.height=c.width/1.777777778
+  },0)
+}
+rsz()
+
+Draw=()=>{
+  if(!t){
+    R=(Rl,Pt,Yw,m)=>{
+      M=Math
+      A=M.atan2
+      H=M.hypot
+      X=S(p=A(X,Y)+Rl)*(d=H(X,Y))
+      Y=C(p)*d
+      X=S(p=A(X,Z)+Yw)*(d=H(X,Z))
+      Z=C(p)*d
+      Y=S(p=A(Y,Z)+Pt)*(d=H(Y,Z))
+      Z=C(p)*d
+      if(m){
+        X+=oX
+        Y+=oY
+        Z+=oZ
+      }
+    }
+    Q=()=>[c.width/2+X/Z*1e3,c.height/2+Y/Z*1e3]
+
+    I=(A,B,M,D,E,F,G,H)=>(K=((G-E)*(B-F)-(H-F)*(A-E))/(J=(H-F)*(M-A)-(G-E)*(D-B)))>=0&&K<=1&&(L=((M-A)*(B-F)-(D-B)*(A-E))/J)>=0&&L<=1?[A+K*(M-A),B+K*(D-B)]:0
+
+    getHSVfromRGB = (red, green, blue)=>{
+      let r_ = red//256
+      let g_ = green//256
+      let b_ = blue//256
+      let cmax=Math.max(r_, g_ , b_)
+      let cmin=Math.min(r_, g_ , b_)
+      let delta = cmax - cmin
+      let hue = 0
+      if(delta == 0)   hue = 0
+      if(cmax  == r_)  hue = (((g_-b_)/delta)%6)*60
+      if(cmax  == g_)  hue = (((b_-r_)/delta+2))*60
+      if(cmax  == b_)  hue = (((r_-g_)/delta+4))*60
+      let sat
+      if(cmax == 0) sat = 0
+      else sat = delta/cmax
+      let val = cmax
+      return [hue, sat, val]
+    }
+
+    getRGBfromHSV = (hue, sat, val) => {
+      sat=Math.max(1,sat)
+      let e_ = val * sat
+      let x_ = e_*(1-(Math.abs(((hue/60)%2)-1)))
+      let m_ = val - e_
+      let rgb = [e_, e_, e_]
+      if(hue <  60) rgb = [e_, x_, 0]
+      if(hue >= 60  && hue < 120) rgb = [e_, 0, x_]
+      if(hue >= 120 && hue < 180) rgb = [x_, e_, 0]
+      if(hue >= 180 && hue < 240) rgb = [0, e_, x_]
+      if(hue >= 240 && hue < 300) rgb = [0, x_, e_]
+      if(hue >= 300 && hue < 360) rgb = [x_, 0, e_]
+      return rgb
+    }
+
+    for(CB=[],j=6;j--;CB=[...CB,b])for(i=4,b=[];i--;)b=[...b,[(a=[S(p=Math.PI/2*i+Math.PI/4),C(p),sp=2**.5/2])[j%3]*(l=j<3?1:-1),a[(j+1)%3]*l,a[(j+2)%3]*l]]
+
+    stroke=(scol,fcol)=>{
+      if(scol){
+        x.closePath()
+        x.globalAlpha=.2
+        x.strokeStyle=scol
+        x.lineWidth=Math.min(500, 100/Z)
+        x.stroke()
+        x.globalAlpha=1
+        x.lineWidth/=4
+        x.stroke()
+      }
+      if(fcol){
+        x.fillStyle=fcol
+        x.fill()
+      }
+    }
+
+    omx=omy=mx=my=0
+    window.onkeydown=e=>{
+      if(e.keyCode==32 && matchOver) resetScores()
+    }
+    window.onmousemove=e=>{
+      let rect = c.getBoundingClientRect()
+      omx=mx
+      omy=my
+      mx = (e.pageX-rect.left)/c.clientWidth*c.width
+      my = (e.pageY-rect.top)/c.clientHeight*c.height
+    }
+
+    printText = (caption, X, Y, size, col, justify='left') => {
+      x.font=size+'px courier'
+      x.textAlign = justify
+      x.fillStyle=col
+      caption.split("\n").map((v,i)=>{
+        x.fillText(v, X, Y+size*i)
+      })
+    }
+
+    window.onmousedown=e=>{
+      if(e.button==0) mbutton=true
+    }
+    window.onmouseup=e=>{
+      if(e.button==0) mbutton=false
+    }
+
+    iPv=0,mx=my=mbutton=0
+
+    initGame = lvl =>{
+      ls=1
+      lvlTransition=false
+      P=Array(10).fill().map((v,i)=>{
+        X=S(p=Math.PI*2/5*i+(i>=5?Math.PI:0))*ls
+        Y=sp/4
+        Z=3*(i<5?-1:1)+C(p)*ls
+        vx=(Rn()-.5)*iPv
+        vz=(Rn()-.5)*iPv
+        return [X,Y,Z,vx,0,vz,false, 0, 0, false]
+      })
+      APITimer=0
+      AIPieceSelected = -1
+      level = lvl
+    }
+    resetScores=()=>{
+      humanScore = 0
+      AIScore = 0
+      gameInPlay=true
+      matchOver=false
+      initGame(1)
+    }
+    resetScores()
+
+    doAI = () => {
+      if(lvlTransition) return
+      difficulty=level*(1/3)
+      if(AIPieceSelected == -1 && APITimer < t){
+        l=P.filter(v=>v[2]>0)
+        if(l.length){
+          AIPieceSelected = l [Rn()*l.length|0]
+        } else {
+          AIPieceSelected = -1
+        }
+      }
+      if(AIPieceSelected !== -1){
+        if(AIPieceSelected[2]<=5.35){
+          AIPieceSelected[2]+=.1+(difficulty/4)
+          AIPieceSelected[8]=true
+        }else{
+          AIPieceSelected[8]=false
+          AIPieceSelected[3]=-AIPieceSelected[0]/3.25+(Rn()-.5)/(1+difficulty/1.5**2)
+          AIPieceSelected[5]=-1.5
+          AIPieceSelected = -1
+          APITimer=t+1/(1+difficulty)
+        }
+      }
+    }
+    doVictory=wnr=>{
+      if(!lvlTransition) setTimeout(()=>{
+        if(winner){
+          AIScore++
+        }else{
+          humanScore++
+        }
+        if(Math.abs(AIScore-humanScore)>9){
+          matchOver=true
+        } else {
+          initGame(level+1)
+        }
+      }, 2000)
+      lvlTransition = true
+      x.fillStyle = wnr ? '#400c' : '#041c'
+      x.fillRect(0,0,c.width,c.height)
+      winner=wnr
+    }
+    p1col='#0f42'
+    p2col='#ff12'
+  }
+  x.fillStyle='#1028'
+  x.fillRect(0,0,c.width,c.height)
+  x.lineJoin=x.lineCap='round'
+  oX=0
+  oY=-1
+  oZ=10
+  Yw=C(t/4)/10
+  Pt=S(t/2)/10-.5
+  Rl=0
+  
+  let size = 100
+  let caption = `M U L T I B O A R D`
+  printText(caption, 100, size, size, '#0ff', 'left')
+  caption = `a game for
+EVERYONE
+
+
+OBJECTIVE`
+  size=50
+  printText(caption, 100, size*3, size, '#fff8', 'left')
+  size=30
+  caption=`be the first
+to gain 10 points
+on your opponent!
+`
+  printText(caption, 100, 400, size, '#fff8', 'left')
+
+  printText('LEVEL ' + level, c.width-500,300,100,'#0f0', 'left')
+  printText('YOUR SCORE ' + humanScore, c.width-500,550,50,'#0f0', 'left')
+  printText('AI SCORE   ' + AIScore, c.width-500,600,50,'#0f0', 'left')
+
+
+  for(m=2;m--;)CB.map((v,i)=>{
+    if((!m&&(i==0||i==2)) || (m&&(i==2||i==3)))return
+    x.beginPath()
+    v.map((q,j)=>{
+      X=q[1]*4
+      Y=q[2]*.25
+      Z=q[0]*4-4*(m?sp:-sp)
+      R(Rl,Pt,Yw,1)
+      if(Z>0){
+        x.lineTo(...Q())
+      }
+    })
+    stroke('#ffffff08',m?p1col:p2col)
+  })
+  for(n=2;n--;)for(m=2;m--;)CB.map((v,i)=>{
+    if((!m&&i==0) || (m&&i==3)){
+      x.beginPath()
+      v.map((q,j)=>{
+        X=(q[1]*(1+(2/3))-sp*(2+(1/3)))*(n?-1:1)
+        Y=q[2]*.25
+        Z=q[0]*4-4*(m?sp:-sp)
+        R(Rl,Pt,Yw,1)
+        if(Z>0){
+          x.lineTo(...Q())
+        }
+      })
+      stroke('#fff1',m?p1col:p2col)
+    }
+  })
+
+  sd=12,iPls=sp/2.53,iPh=.1
+
+  P.map((v,i)=>{
+    X=tx=tvx=v[0]
+    Y=ty=tvy=v[1]
+    Z=tz=tvz=v[2]
+    v[3]/=1.125
+    v[4]/=1.125
+    v[5]/=1.125
+    R(Rl,Pt,Yw,1)
+    v[7]=mbutton&&v[6]
+    if(!mbutton) v[6]=false
+    l=Q()
+    if(Math.hypot(mx-l[0],my-l[1])<iPls*1e3/Z && P.filter(q=>q[6]).length==0) v[6]=true
+    if(v[2]>0){
+      if(Math.abs(v[0])>.4&&v[2]+v[5]*1.01-iPls<0)v[2]=0+iPls,v[5]*=-.5,v[5]=.2
+    }else{
+      if(Math.abs(v[0])>.4&&v[2]+v[5]*1.01+iPls>0)v[2]=0-iPls,v[5]*=-.5,v[5]=.2
+    }
+    if(v[2]<0 && v[8]) v[8]=false,AIPieceSelected=-1
+    if(v[2]<0&&mbutton&&v[6]){
+      scl=.01
+      v[0]+=(mx-l[0])/99
+      v[2]-=(my-l[1])/99
+      x.beginPath()
+      x.arc(...Q(),15,0,7)
+      x.fillStyle='#f00'
+      x.fill()
+    }else{
+      if(!lvlTransition){
+        tx=v[0]+=v[3]
+        ty=v[1]+=v[4]
+        tz=v[2]+=v[5]
+      }
+    }
+    if(tx>4*sp-iPls || tx<-4*sp+iPls)v[3]*=-.15
+    if(tz>8*sp-iPls || tz<-8*sp+iPls)v[5]*=-.25
+    if(v[0]-iPls<-4*sp)v[0]=-4*sp+iPls
+    if(v[0]+iPls>4*sp)v[0]=4*sp-iPls
+
+    if(v[2]-iPls<-8*sp)v[2]=-8*sp+iPls
+    if(v[2]+iPls>8*sp)v[2]=8*sp-iPls
+
+    X1=v[0]
+    Z1=v[2]
+    if(!v[6] && !v[8]){
+      d1=Math.hypot(v[3],v[5])
+      P.map((q,j)=>{
+        X2=q[0]
+        Z2=q[2]
+        if(i!=j){
+          d=Math.hypot(X1-X2,Z1-Z2)
+          d2=Math.hypot(q[3],q[5])
+          if(d<iPls*2){
+            q[3]/=1.04
+            q[5]/=1.04
+            v[3]/=1.04
+            v[5]/=1.04
+            v[0]=X2+(X1-X2)/d*iPls*2
+            v[2]=Z2+(Z1-Z2)/d*iPls*2
+            v[3]+=(X1-X2)*d2
+            v[5]+=(Z1-Z2)*d2
+            if(!q[6]){
+              q[3]-=(X1-X2)*d1
+              q[5]-=(Z1-Z2)*d1
+            }
+          }
+        }
+      })
+    }
+    if(v[2]<0 && v[7] ){
+      v[5]-=n=(my-omy)/60
+      v[3]+= -v[0]/100*(n*4)*(1+(Rn()-.5)/20)
+    }
+  })
+
+  selected = -1
+  for(m=3;m--;)P.map(v=>{
+    X=tx=v[0]
+    Y=ty=v[1]
+    Z=tz=v[2]
+    if(m<2){
+      x.beginPath()
+      for(let i=sd;i--;){
+        X=tx+S(p=Math.PI*2/sd*i)*iPls
+        Y=ty-(m?iPh:0)
+        Z=tz+C(p)*iPls
+        R(Rl,Pt,Yw,1)
+        if(Z>0){
+          x.lineTo(...Q())
+        }
+      }
+      stroke('#fff2', v[6]?(v[2]>0?'#f00a':'#0f8a'):(v[8]?'#f00a':'#6668'))
+    }else{
+      for(let i=sd;i--;){
+        x.beginPath()
+        X=tx+S(p=Math.PI*2/sd*i)*iPls
+        Y=ty-0
+        Z=tz+C(p)*iPls
+        R(Rl,Pt,Yw,1)
+        if(Z>0){
+          x.lineTo(...Q())
+        }
+        X=tx+S(p=Math.PI*2/sd*(i+1))*iPls
+        Y=ty-0
+        Z=tz+C(p)*iPls
+        R(Rl,Pt,Yw,1)
+        if(Z>0){
+          x.lineTo(...Q())
+        }
+        X=tx+S(p=Math.PI*2/sd*(i+1))*iPls
+        Y=ty-iPh
+        Z=tz+C(p)*iPls
+        R(Rl,Pt,Yw,1)
+        if(Z>0){
+          x.lineTo(...Q())
+        }
+        X=tx+S(p=Math.PI*2/sd*i)*iPls
+        Y=ty-iPh
+        Z=tz+C(p)*iPls
+        R(Rl,Pt,Yw,1)
+        if(Z>0){
+          x.lineTo(...Q())
+        }
+        stroke('#fff2', v[6]?(v[2]>0?'#f00a':'#0f8a'):(v[8]?'#f00a':'#6668'))
+      }
+    }
+  })
+
+  let pulled = P.filter(v=>v[6]&&v[2]<-4.5+iPls*1.5)
+  for(i=25;i--;){
+    x.beginPath()
+    X=-4*sp+(8*sp/25*i)
+    Y=0
+    Z=-4.5
+    ipx = 0
+    if(mbutton && pulled.length){
+      d=3+(3+Math.hypot(X-pulled[0][0], Math.min(0, Z-pulled[0][2])))**3
+      ipx = (X-pulled[0][0]) * 2000000 / d**4
+      ipl1 = -4.5-(Z-pulled[0][2]+iPls)*50/d/1.5
+    }
+    X+=ipx
+    Z= mbutton && pulled.length ? ipl1 : -4.5
+    R(Rl,Pt,Yw,1)
+    x.lineTo(...Q())
+    X=-4*sp+(8*sp/25*(i+1))
+    Y=0
+    Z=-4.5
+    ipx = 0
+    if(mbutton && pulled.length){
+      d=3+(3+Math.hypot(X-pulled[0][0], Math.min(0, Z-pulled[0][2])))**3
+      ipx = (X-pulled[0][0]) * 2000000 / d**4
+      ipl2 = -4.5-(Z-pulled[0][2]+iPls)*50/d/1.5
+    }
+    X+=ipx
+    Z= mbutton && pulled.length ? ipl2 : -4.5
+    R(Rl,Pt,Yw,1)
+    x.lineTo(...Q())
+    stroke(pulled.length&&mbutton?'fff':'#6af')
+  }
+
+  doAI()
+
+  pulled = P.filter(v=>v[8]&&v[2]>4.5-iPls*1.5)
+  for(i=25;i--;){
+    x.beginPath()
+    X=-4*sp+(8*sp/25*i)
+    Y=0
+    Z=4.5
+    ipx = 0
+    if(pulled.length){
+      d=3+(3+Math.hypot(X-pulled[0][0], Math.min(0, pulled[0][2]-Z)))**3
+      ipx = (X-pulled[0][0]) * 2000000 / d**4
+      ipl1 = 4.25+(pulled[0][2]-Z+iPls)*50/d/1.5
+    }
+    X+=ipx
+    Z= pulled.length ? ipl1 : 4.5
+    R(Rl,Pt,Yw,1)
+    x.lineTo(...Q())
+    X=-4*sp+(8*sp/25*(i+1))
+    Y=0
+    Z=4.5
+    ipx = 0
+    if(pulled.length){
+      d=3+(3+Math.hypot(X-pulled[0][0], Math.min(0, pulled[0][2]-Z)))**3
+      ipx = (X-pulled[0][0]) * 2000000 / d**4
+      ipl2 = 4.25+(pulled[0][2]-Z+iPls)*50/d/1.5
+    }
+    X+=ipx
+    Z= pulled.length ? ipl2 : 4.5
+    R(Rl,Pt,Yw,1)
+    x.lineTo(...Q())
+    stroke(pulled.length?'#fff':'#6af')
+  }
+  if(P.filter(v=>v[2]>0).length==10) doVictory(0)
+  if(P.filter(v=>v[2]<0).length==10) doVictory(1)
+  if(lvlTransition){
+    caption = (winner?`AI`:`YOU`)+"\n"+
+    `>>WON LEVEL ${level}<<`
+    printText(caption, c.width/2, 240,100, winner?'#f00':'#0f4', 'center')
+    if(matchOver){
+      caption=`FINAL SCORES
+YOU ${humanScore}
+AI  ${AIScore}`
+      printText(caption, c.width/2-200, 540,60, winner?'#f00':'#0f4', 'left')
+      caption=`>>>>    MATCH OVER    <<<<
+hit the spacebar to play again
+`
+      printText(caption, c.width/2, 840,100, winner?'#f00':'#0f4', 'center')
+    }
+  }
+  t+=1/60
+  requestAnimationFrame(Draw)
+}
+Draw()
+
+
+
+    </script>
+  </body>
+</html>

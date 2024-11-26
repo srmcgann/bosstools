@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>HDRI explorer [video|image]</title>
+    <style>
+      body, html{
+        margin: 0;
+        height: 100vh;
+        background: linear-gradient(-45deg, #333, #000);
+        overflow: hidden;
+      }
+      canvas{
+        border: 3px solid #fff3;
+        position: absolute;
+        background: #04f1;
+        left: 50%;
+        top: 50%;
+        border-radius: 10px;
+        transform: translate(-50%, -50%);
+      }
+      canvas:focus{
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+    <script>
+      var material 
+      var materialLoaded = false
+      importMap = `
+        {
+          "imports": {
+            "three": "https://threejs.org/build/three.module.js",
+            "three/addons/": "https://threejs.org/examples/jsm/"
+          }
+        }
+      `
+
+      script = `
+        import * as THREE from 'https://threejs.org/build/three.module.js'
+        var camera
+        let scene, renderer
+        let isUserInteracting = false,
+            lon = 0, lat = 0,
+            phi = 0, theta = 0,
+            onPointerDownPointerX = 0,
+            onPointerDownPointerY = 0,
+            onPointerDownLon = 0,
+            onPointerDownLat = 0
+
+        const distance = 1e4-9e3
+
+        var func = navigator.userAgent.toLowerCase().indexOf('firefox') != -1 ? "onwheel" : "onmousewheel"
+        window[func]= e => {
+          let delta = camera.fov
+          delta += e.deltaY/25
+          camera.fov = Math.min(140, Math.max(10, delta))
+          camera.updateProjectionMatrix()
+          
+        }
+
+        function init(url){
+          const container = document.getElementById( 'container' )
+          camera = new THREE.PerspectiveCamera( 100, 16/9, .05, 1e6)
+          scene = new THREE.Scene()
+          //scene.background = new THREE.Color( 0xffffff );
+          const geometry = new THREE.SphereGeometry( 1e4, 64, 128 )
+          geometry.scale( - 1, 1, 1 )
+          var texture
+          if(url.toLowerCase().indexOf('.mp4') != -1 ||
+             url.toLowerCase().indexOf('.webm') != -1){
+            const vid = document.createElement('video')
+            vid.muted = true
+            vid.loop = true
+            vid.crossOrigin = true
+            vid.oncanplay = () =>{
+              materialLoaded = true
+            }
+            vid.src = url
+            vid.play()
+            texture = new THREE.VideoTexture( vid )
+            //texture.offset  = 0
+            texture.anisotropy = 1
+            texture.wrapS = THREE.RepeatWrapping
+            texture.wrapT = THREE.RepeatWrapping
+            texture.repeat.set( 1, 1 )
+          }else{
+            texture = new THREE.TextureLoader().load(url)
+            //texture.wrapS = THREE.RepeatWrapping
+            //texture.wrapT = THREE.RepeatWrapping
+            //texture.repeat.set( 1, 1 )
+          }
+
+          texture.colorSpace = THREE.SRGBColorSpace
+          material = new THREE.MeshBasicMaterial( { map: texture } )
+          const mesh = new THREE.Mesh( geometry, material )
+          scene.add( mesh )
+          renderer = new THREE.WebGLRenderer()
+          renderer.setPixelRatio( window.devicePixelRatio )
+          renderer.setSize( 1920, 1080 )
+          renderer.setAnimationLoop( animate )
+          container.appendChild( renderer.domElement )
+          document.addEventListener( 'pointerdown', onPointerDown )
+          document.addEventListener( 'pointermove', onPointerMove )
+          document.addEventListener( 'pointerup', onPointerUp )
+        }
+
+        function onPointerDown( event ) {
+          isUserInteracting = true
+          onPointerDownPointerX = event.clientX
+          onPointerDownPointerY = event.clientY
+          onPointerDownLon = lon
+          onPointerDownLat = lat
+        }
+
+        function onPointerMove( event ) {
+          if ( isUserInteracting === true ) {
+            var mag = .01 + camera.fov/450
+            lon = ( onPointerDownPointerX - event.clientX ) * mag + onPointerDownLon
+            lat = ( onPointerDownPointerY - event.clientY ) * mag + onPointerDownLat
+          }
+        }
+
+        function onPointerUp() {
+          isUserInteracting = false
+        }
+
+        function animate() {
+          lat = Math.max( - 89.9, Math.min( 89.9, lat ) )
+          phi = ( 90 - lat )/180*Math.PI
+          theta = lon/180*Math.PI
+          camera.position.x = distance * Math.sin( phi ) * Math.cos( theta )
+          camera.position.y = distance * Math.cos( phi )
+          camera.position.z = distance * Math.sin( phi ) * Math.sin( theta )
+          camera.lookAt( 0, 0, 0 )
+          renderer.render( scene, camera )
+          if(materialLoaded) material.map.needsUpdate = true
+        }
+
+        var url
+        var l = location.href.split('url=')
+        if(l.length>1){
+          url = l[1].split('&')[0]
+          init(url)
+        }else{
+          //init('https://i.imgur.com/hBdxXm0.mp4')
+          init('https://srmcgann.github.io/skyboxes/HDRI/26.jpg')
+        }
+
+      `
+        
+      scriptblock = document.createElement('script')
+      scriptblock.setAttribute('type', 'importmap')
+      scriptblock.innerHTML = importMap
+      document.body.appendChild(scriptblock)
+
+      scriptblock = document.createElement('script')
+      scriptblock.setAttribute('type', 'module')
+      scriptblock.innerHTML = script
+      document.body.appendChild(scriptblock)
+
+      rsz = window.onresize = () =>{
+        c = document.querySelectorAll('canvas')[0]
+        if(typeof c != 'undefined'){
+          c.tabindex = 0
+          c.focus()
+          let b = document.body
+          let margin = 10
+          let n
+          let d = .5625
+          c.style.borderRadius = '10px'
+          c.style.border = '3px solid #fff3'
+          if(b.clientHeight/b.clientWidth > d){
+            c.style.width = `${(n=b.clientWidth) - margin*2}px`
+            c.style.height = `${n*d - margin*2}px`
+          }else{
+            c.style.height = `${(n=b.clientHeight) - margin*2}px`
+            c.style.width = `${n/d - margin*2}px`
+          }
+        }
+      }
+      for(let i=10;i--;) setTimeout(()=>{rsz()}, i*60)
+      
+    </script>
+  </body>
+</html>

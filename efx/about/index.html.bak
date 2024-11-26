@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body, html{
+        font-family: courier;
+        background: linear-gradient(45deg, #021, #102);
+        min-height: 100vh;
+        margin: 0;
+        color: #afc;
+        font-size: 14px;
+      }
+      .main{
+        width: 700px;
+        border: 1px solid #4f82;
+        background: #001c;
+        left: 50%;
+        top: 10px;
+        text-align: justify;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        font-size: 1em;
+        padding: 20px;
+      }
+      .title{
+       color: #ff0;
+       font-size: 2em;
+       min-width: 100%;
+       text-align: center;
+       display: inline-block;
+      }
+      .syntax{
+        color: #aaa;
+        font-size: 1.2em;
+        font-style: oblique;
+      }
+      b{
+        color: #ffc;
+        font-weight: 400;
+      }
+      .sectionTitle{
+        font-size: 2em;
+        color: #4f8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <br>
+      <span class="title">efx.dweet.net faq</span><br><br>
+      efx.dweet.net is one of several tools used by the audiobot FOR <b>IMAGES</b> or <b>VIDEOS</b>, deployed in select channels on the libera and efnet IRC networks and discord.<br><br>
+      <br>
+      <div class="syntax">
+        the parameters...<br>
+        <center>
+          <b>wavey</b><br>
+          <b>scanlines</b><br>
+          <b>twirl</b><br>
+          <b>matrix</b><br>
+          <b>vignette</b><br>
+        </center>
+        <br><br>
+        <div class="sectionTitle">Examples</div>
+        The following examples are all valid.<br><br>
+        <b>.wavey https://i.imgur.com/lM1ZA.jpg</b><br>
+        <b>.scanlines https://i.imgur.com/lM1ZA.jpg</b><br>
+        <b>.twirl https://i.imgur.com/lM1ZA.jpg</b><br>
+        <b>.matrix https://i.imgur.com/lM1ZA.jpg</b><br>
+        <b>.vignette https://i.imgur.com/lM1ZA.jpg</b><br><br><br>
+        <div class="sectionTitle">Mixing Commands</div>
+        the commands can be mixed and matched like so<br><br>
+        <b>.wavey https://i.imgur.com/lM1ZA.jpg?scanlines</b><br>
+        <b>.vignette https://i.imgur.com/lM1ZA.jpg?wavey</b><br>
+        <b>.matrix https://i.imgur.com/lM1ZA.jpg?vignette&wavey</b><br><br><br>
+        <div class="sectionTitle">the .efx command</div>
+        additionally, the general-purpose .efx command will invoke any or all of the parameters<br><br>
+        <b>.efx https://i.imgur.com/lM1ZA.jpg?matrix&vignette&wavey</b><br><br><br>
+        note<br><b>scanlines</b> does nothing in combination with <b>matrix</b><br><br><br>
+        <div class="sectionTitle">Controlling Intensities</div>
+        Intensities can be controlled by including a value for any effect. This changes the intensity for that particular effect. Valid ranges are 0-1 but other values can be experimented with.<br><br>
+        <b>.efx https://i.imgur.com/lM1ZA.jpg?vignette=0.85</b><br>
+        <b>.twirl https://i.imgur.com/lM1ZA.jpg?scanlines=0.25</b><br>
+      </div>
+    </div>
+    <script>
+    </script>
+  </body
+</html>

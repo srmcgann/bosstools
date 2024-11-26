@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>bejemmed! game</title>
+    <style>
+body,html{
+  background: #000;
+  margin: 0;
+  height: 100vh;
+  font-family: courier;
+}
+#c{
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: #000;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}    </style>
+  </head>
+  <body>
+          <canvas id=c></canvas>
+                <script>
+c=document.querySelector('#c')
+    x=c.getContext('2d')
+    S=Math.sin
+    C=Math.cos
+    Rn=Math.random
+    R = function(r,g,b,a) {
+      a = a === undefined ? 1 : a;
+      return "rgba("+(r|0)+","+(g|0)+","+(b|0)+","+a+")";
+    }
+    t=go=0
+    rsz=window.onresize=()=>{
+      setTimeout(()=>{
+        if(document.body.clientWidth > document.body.clientHeight*1.77777778){
+          c.style.height = '100vh'
+          setTimeout(()=>c.style.width = c.clientHeight*1.77777778+'px',0)
+        }else{
+          c.style.width = '100vw'
+          setTimeout(()=>c.style.height = c.clientWidth/1.77777778 + 'px',0)
+        }
+        c.width=1920
+        c.height=c.width/1.777777778
+      },0)
+    }
+    rsz()
+
+    Draw=()=>{
+      if(!t){
+        bg=new Image()
+        bg.src='1p7iM4.jpg' 
+        R=(Rl,Pt,Yw,m)=>{
+          M=Math
+          A=M.atan2
+          H=M.hypot
+          X=S(p=A(X,Y)+Rl)*(d=H(X,Y))
+          Y=C(p)*d
+          X=S(p=A(X,Z)+Yw)*(d=H(X,Z))
+          Z=C(p)*d
+          Y=S(p=A(Y,Z)+Pt)*(d=H(Y,Z))
+          Z=C(p)*d
+          if(m){
+            X+=oX
+            Y+=oY
+            Z+=oZ
+          }
+          stroke=(scol, fcol)=>{
+            if(scol){
+              x.closePath()
+              x.strokeStyle=scol
+              x.globalAlpha=.2
+              x.lineWidth=Math.min(500,100/Z)
+              x.stroke()
+              x.globalAlpha=1
+              x.lineWidth/=3
+              x.stroke()
+            }
+            if(fcol){
+              x.fillStyle=fcol
+              x.fill()
+            }
+          }
+        }
+        Q=()=>[c.width/2+450+X/Z*800,c.height/2+Y/Z*800]
+        Q_=()=>[c.width/2+X/Z*800,c.height/2+Y/Z*800]
+        I=(A,B,M,D,E,F,G,H)=>(K=((G-E)*(B-F)-(H-F)*(A-E))/(J=(H-F)*(M-A)-(G-E)*(D-B)))>=0&&K<=1&&(L=((M-A)*(B-F)-(D-B)*(A-E))/J)>=0&&L<=1?[A+K*(M-A),B+K*(D-B)]:0
+
+        window.onmousemove=e=>{
+          let rect = c.getBoundingClientRect()
+          mx=(e.pageX-rect.left)/c.clientWidth*c.width
+          my=(e.pageY-rect.top)/c.clientHeight*c.height
+        }
+
+        swapping = false
+        doSwapAnimation=(a,b)=>{
+          swapping=true
+          sourceP=JSON.parse(JSON.stringify(P))
+          let tx = a[0]
+          let ty = a[1]
+          a[0]=b[0]
+          a[1]=b[1]
+          b[0]=tx
+          b[1]=ty
+          destP=JSON.parse(JSON.stringify(P))
+        }
+
+        doSwapWithEmptyCellAnimation=(P_,i)=>{
+      
+          X1=X=((i%cl)-cl/2+.5)*sp
+          Y1=Y=(((i/cl|0)%rw)-rw/2+.5)*sp
+          Z1=Z=0
+          R(Rl,Pt,Yw,1)
+          tx1=X,ty1=Y,tz1=Z
+
+          X2=X=P_[0]
+          Y2=Y=P_[1]
+          Z2=Z=P_[2]
+          R(Rl,Pt,Yw,1)
+          tx2=X,ty2=Y,tz2=Z
+
+          d=Math.hypot(tx1-tx2,ty1-ty2)
+          if(d<1.5){
+            P_[0]  = X1
+            P_[1]  = Y1
+            P_[2]  = Z1
+            P_[7]  = i
+            P_[8]  = 0
+          }
+        }
+
+        settled = true
+        grav=.01, tgt_ls=400
+
+        dropPieces=()=>{
+          settled = true
+          P.map(v=>{
+            let idx   = v[7]
+            let cbidx = idx+8
+            if(cbidx<64){
+              if(P.filter(v=>v[7]==cbidx).length){
+                v[5]=0
+                v[1]=((v[7]/8|0)-4+.5)*sp
+              }else{
+                settled = false
+                v[5] += grav
+              }
+            }else{
+              v[5]=0
+              v[1]=((v[7]/8|0)-4+.5)*sp
+            }
+          })
+          for(i=8;i--;){
+            if(!P.filter(v=>v[7]==i).length){
+              X=((i%cl)-cl/2+.5)*sp
+              Y=(((i/cl|0)%rw)-rw/2+.5)*sp
+              Z=0
+              P=[...P, spawnP(X,Y,Z,i)]
+            }
+          }
+        }
+
+        checkBoard=()=>{
+          if(!settled || swapping) return
+          P.map(v=>{
+            v[10]=0
+          })
+          for(let j=0;j<8;j++){
+            good=true
+            ct=0
+            idxs=[]
+            for(let i=0;i<8;i++){
+              idx=i*8+j
+              let cellid = !(l=P.filter(v=>v[7]==idx)).length?-1:l[0][3]
+              if(i && ocv==cellid){
+                ct++
+              }else{
+                if(ct>1){
+                  idxs.map(v=>{
+                    P.map((q,j)=>{
+                      if(q[7]==v[0])q[10]=1, score+=scorIncr
+                    })
+                  })
+                }
+                ct=0
+                idxs=[]
+              }
+              idxs=[...idxs, [idx, cellid]]
+              ocv = cellid
+            }
+            if(ct>1){
+              idxs.map(v=>{
+                P.map((q,j)=>{
+                  if(q[7]==v[0])q[10]=1
+                })
+              })
+            }
+          }
+
+
+          for(let i=0;i<8;i++){
+            good=true
+            ct=0
+            idxs=[]
+            for(let j=0;j<8;j++){
+              idx=i*8+j
+              let cellid = !(l=P.filter(v=>v[7]==idx)).length?-1:l[0][3]
+              if(j && ocv==cellid){
+                ct++
+              }else{
+                if(ct>1){
+                  idxs.map(v=>{
+                    P.map((q,j)=>{
+                      if(q[7]==v[0])q[10]=1, score+=scorIncr
+                    })
+                  })
+                }
+                ct=0
+                idxs=[]
+              }
+              idxs=[...idxs, [idx, cellid]]
+              ocv = cellid
+            }
+            if(ct>1){
+              idxs.map(v=>{
+                P.map((q,j)=>{
+                  if(q[7]==v[0])q[10]=1, score+=scorIncr
+                })
+              })
+            }
+          }
+        }
+
+        processSelection = () =>{
+          Array(rw*cl).fill().map((v,i)=>{
+            X=((i%cl)-cl/2+.5)*sp
+            Y=(((i/cl|0)%rw)-rw/2+.5)*sp
+            Z=0
+            R(Rl,Pt,Yw,1)
+            l=Q()
+            d=Math.hypot(l[0]-mx,l[1]-my)
+            if(d<tgt_ls/Z){
+              occupied=false
+              P.map((q,j)=>{
+                swapped=false
+                if(q[7]==i){
+                  occupied=true
+                  switch(q[8]){
+                    case 0:
+                      P.map((n,m)=>{
+                        if(n[8]&&m!=j){
+                          X1=q[7]%8
+                          Y1=q[7]/8|0
+                          X2=n[7]%8
+                          Y2=n[7]/8|0
+                          d=Math.hypot(X1-X2,Y1-Y2)
+                          if(d<1.1){
+                            swapped=true
+                            doSwapAnimation(n,q)
+                            n[8]=q[8]=n[9]=q[9]=0
+                          }
+                        }
+                      })
+                      if(!swapped){
+                        q[8]++
+                        q[8]%=2
+                      }
+                    break
+                    case 1:
+                      q[8]=0
+                    break
+                  }
+                }
+              })
+              if(!occupied){
+                if(P.filter(v=>v[8]).length){
+                  P.map(q=>{
+                    if(q[8]) doSwapWithEmptyCellAnimation(q,i)
+                  })
+                }
+              }
+            } else {
+              if(P.filter(v=>v[8]).length>1) P.map(v=>v[8]=0)
+            }
+          })
+        }
+
+        settled = true
+        window.onmousedown=e=>{
+          if(e.button==0 && settled && !swapping){
+            let rect = c.getBoundingClientRect()
+            mx=(e.pageX-rect.left)/c.clientWidth*c.width
+            my=(e.pageY-rect.top)/c.clientHeight*c.height
+            processSelection()
+          }
+        }
+
+        rw=cl=8,sp=1,mx=my=0
+
+        go=false
+        tiles=Array(8).fill().map((v,i)=>{
+          let img = {img: new Image(), loaded: false}
+          img.img.onload=()=>{
+            img.loaded=true
+            if(tiles.filter(v=>v.loaded).length==8) go=true
+          }
+          img.img.src='./symbols/'+(i+1)+'.png'
+          return img
+        })
+        spawnP = (X,Y,Z,i) => {
+          return [X,Y,Z,Rn()*7|0,0,0,0,i,0,0,0]
+        }
+        SP=[], iSPv=.1, iSPs=100, iSPc=200
+        spawnSplosion = (X,Y,Z) => {
+          a=Array(iSPc).fill().map(v=>{
+            return [X,Y,Z,(Rn()-.5)*iSPv,(Rn()-.5)*iSPv,(Rn()-.5)*iSPv,iSPs]
+          })
+          SP=[...SP, ...a]
+        }
+        getCellIdx=v=>{
+          let X=(v[0]+cl/2)|0
+          let Y=(v[1]-.5+rw/2)|0
+          return Y*cl+X
+        }
+
+        scorIncr = 8**2
+        init = () => {
+          score = 0
+          P=Array(64).fill().map((v,i)=>{
+            X=(i%8-4+.5)*sp
+            Y=((i/8|0)-4+.5)*sp
+            Z=0
+            return spawnP(X,Y,Z,i)
+          })
+        }
+        init()
+      }
+
+      if(go){
+        x.globalAlpha=.5
+        x.drawImage(bg,0,0,c.width,c.height)
+        x.fillStyle='#0001'
+        x.globalAlpha=1
+        x.fillRect(0,0,c.width,c.height)
+        oX=oY=0, oZ=7
+        Rl=0,Pt=C(t/2)/8,Yw=S(t/2)/8
+
+        B=Array(rw*cl).fill().map((v,i)=>{
+          tx=X=((i%cl)-cl/2+.5)*sp
+          ty=Y=(((i/cl|0)%rw)-rw/2+.5)*sp
+          tz=Z=0
+          R(Rl,Pt,Yw,1)
+          l=Q()
+          d=Math.hypot(l[0]-mx,l[1]-my)
+          let hover = d<tgt_ls/Z
+          let state
+          P.map((q,j)=>{
+            if(q[7]==i){
+              state = q[8]
+              q[9]=hover
+            }
+          })
+          return [tx, ty, tz, hover, state]
+        })
+
+        B.map(v=>{
+          tx=v[0]
+          ty=v[1]
+          tz=v[2]
+          ls=2**.5/2*sp/1.05
+          x.beginPath()
+          for(i=4;i--;){
+            X=tx+S(p=Math.PI*2/4*i+Math.PI/4)*ls
+            Y=ty+C(p)*ls
+            Z=tz
+            R(Rl,Pt,Yw,1)
+            x.lineTo(...Q())
+          }
+          stroke('#fff2','')
+          x.beginPath()
+          ls/=1.05
+          for(i=4;i--;){
+            X=tx+S(p=Math.PI*2/4*i+Math.PI/4)*ls
+            Y=ty+C(p)*ls
+            Z=tz
+            R(Rl,Pt,Yw,1)
+            l=Q()
+            x.lineTo(l[0]-3,l[1]-3)
+          }
+          stroke('',(v[3]||v[4])?'#888':'#222')
+        })
+
+        if(swapping){
+          swapping = false
+          sourceP.map((v,i)=>{
+            if(
+              (d=Math.hypot(v[0]-destP[i][0],v[1]-destP[i][1]))>.1
+            ){
+              swapping = true
+            }
+            X=tx=v[0]+=(destP[i][0]-v[0])/5
+            Y=ty=v[1]+=(destP[i][1]-v[1])/5
+            Z=tz=v[2]+=(destP[i][2]-v[2])/5
+            R(Rl,Pt,Yw,1)
+            if(Z>0){
+              s=700/Z
+              l=Q()
+              x.globalCompositeOperation='source-over'
+              x.drawImage(tiles[v[3]].img,l[0]-s/2,l[1]-s/2,s,s)
+              x.globalCompositeOperation='multiply'
+              ls=2**.5/2*sp/1.1
+              x.beginPath()
+              for(let i=4;i--;){
+                X=tx+S(p=Math.PI*2/4*i+Math.PI/4)*ls
+                Y=ty+C(p)*ls
+                Z=tz
+                R(Rl,Pt,Yw,1)
+                x.lineTo(...Q())
+              }
+              switch(v[8]){
+                case 0:
+                  bcol = v[9]?'#0f0':(v[10]?`#f00`:`hsla(${360/8*v[3]+45*4-0},99%,65%,.8)`)
+                  fcol = ``
+                  break
+                case 1:
+                  bcol = `#fff`
+                  fcol = ``
+                  break
+                case 2:
+                  bcol = `#f00`
+                  fcol = ``
+                  break
+              }
+              stroke(fcol, bcol)
+            }
+          })
+          x.globalCompositeOperation='source-over'
+        }else{
+
+          P.map(v=>{
+            X=tx=v[0]+=v[4]
+            Y=ty=v[1]+=v[5]
+            Z=tz=v[2]+=v[6]
+            v[7] = getCellIdx(v)
+            let hover = B[v[7]][3]
+            R(Rl,Pt,Yw,1)
+            if(Z>0){
+              s=700/Z
+              l=Q()
+              x.globalCompositeOperation='source-over'
+              x.drawImage(tiles[v[3]].img,l[0]-s/2,l[1]-s/2,s,s)
+              x.globalCompositeOperation='multiply'
+              ls=2**.5/2*sp/1.1
+              x.beginPath()
+              for(let i=4;i--;){
+                X=tx+S(p=Math.PI*2/4*i+Math.PI/4)*ls
+                Y=ty+C(p)*ls
+                Z=tz
+                R(Rl,Pt,Yw,1)
+                x.lineTo(...Q())
+              }
+              switch(v[8]){
+                case 0:
+                  bcol = v[9]?'#0f0':(v[10]?`#f00`:`hsla(${360/8*v[3]+45*4-0},99%,65%,.8)`)
+                  fcol = ``
+                  break
+                case 1:
+                  bcol = `#fff`
+                  fcol = ``
+                  break
+                case 2:
+                  bcol = `#f00`
+                  fcol = ``
+                  break
+              }
+              stroke(fcol, bcol)
+            }
+            if(v[10]){
+              spawnSplosion(tx,ty,tz)
+            }
+          })
+          P=P.filter(v=>!v[10])
+          x.globalCompositeOperation='source-over'
+          dropPieces()
+          checkBoard()
+          
+          SP.map(v=>{
+            X=v[0]+=v[3]
+            Y=v[1]+=v[4]
+            Z=v[2]+=v[5]
+            R(Rl,Pt,Yw,1)
+            v[6]-=2
+            if(Z>0){
+              l=Q()
+              x.globalAlpha=(1/iSPs*v[6])
+              x.fillStyle='#fff2'
+              s=Math.min(500, 5*(iSPs-v[6])/Z)
+              x.fillRect(l[0]-s/2,l[1]-s/2,s,s)
+              x.fillStyle='#fff'
+              s/=4
+              x.fillRect(l[0]-s/2,l[1]-s/2,s,s)
+            }
+          })
+          x.globalAlpha=1 
+          SP=SP.filter(v=>v[6]>0)
+        }
+        x.textAlign='left'
+        x.font = '130px courier'
+        x.fillStyle='#fff'
+        x.fillText('BEJEMMED!',10,100)
+
+        x.font = '75px courier'
+        x.fillStyle='#fff'
+        x.fillText('get 3 or more',10,200)
+        x.fillText('in a row',10,275)
+
+        x.font = '120px courier'
+        x.fillStyle='#fff'
+        x.fillText('score',10,500)
+        x.font = '120px courier'
+        x.fillStyle='#0fa'
+        x.fillText(score.toLocaleString("en-US"),10,600)
+      }else{
+        x.textAlign='center'
+        x.font = '130px courier'
+        x.fillStyle='#fff'
+        x.fillText('BEJEMMED!',960/2,100)
+        x.textAlign='center'
+        x.font = '130px courier'
+        x.fillStyle='#fff'
+        x.fillText('loading...',960/2,300)
+      }
+
+      t+=1/60
+      requestAnimationFrame(Draw)
+
+    }
+    Draw()
+    
+    </script>
+    </body>
+    </html>

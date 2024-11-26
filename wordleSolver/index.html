@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=1024">
+    <title>wordle solver</title>
+    <meta name="description" content="whitehot robot utilities">
+    <meta name="keywords" content="wordle games solver">
+    <link rel="icon" href="35Uvh.jpg">
+    <meta property="og:url" content="https://wordle.dweet.net"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="wordle solver"/>
+    <meta property="og:description" content="whitehot robot utilities"/>
+    <meta property="og:image" content="35Uvh.jpg"/>
+    <style>
+      body, html{
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(45deg, #000, #123);
+        font-family: courier;
+        font-size: 18px;
+        color: #8fc;
+        background-attachment: fixed;
+        text-align: center;
+      }
+      .main{
+        width: 700px;
+        display: inline-block;
+        position: absolute;
+				min-width: 700px;
+        min-height: calc(100vh - 200px);
+				padding-bottom: 100px;
+        padding-right: 200px;
+        top: 50px;
+        left: calc(50% - 100px);
+        transform: translate(-50%);
+      }
+      input[type=text]{
+        background: #000;
+        border: none;
+        outline: none;
+        color: #cfc;
+        width: 300px;
+        text-align: center;
+        border-bottom: 1px solid #4fc8;
+        font-size: 20px;
+        font-family: courier;
+      }
+      #knownLetters{
+      }
+      #placement{
+      }
+      .validStatus{
+        position: absolute;
+        left: 50%;
+        margin-top: -20px;
+        transform: translate(-50%);
+      }
+      #solveButton{
+        border: none;
+        background: #333;
+        border-radius: 10px;
+        font-family: courier;
+        color: #888;
+        font-size: 24px;
+        cursor: pointer;
+      }
+      .resultLink{
+        text-decoration: none;
+        color: #fff;
+        background: #4f86;
+        padding: 10px;
+      }
+      #resultDiv{
+        position: absolute;
+        margin-top: 50px;
+        min-width: 500px;
+        left: 50%;
+        padding-bottom: 100px;
+        transform: translate(-50%);
+      }
+      .title{
+        color: #fff;
+        font-size: 30px;
+      }
+      .hr{
+        width: 400px;
+        border-bottom: 2px solid #4f80;
+        position: relative;
+        left: 50%;
+        transform: translate(-50%);
+        margin: 0;
+        margin-top: 20px;
+      }
+      .content{
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+      }
+      b{
+        font-size: 1.2em;
+        font-style: oblique;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <div class="content">
+         <span class="title">WORDLE SOLVER</span><br><div class="hr"></div><br>
+         <span style="color: #f80">enter <b>known letters</b> whose<br>positions are unknown<br></span>
+         <input
+          oninput="validate()"
+          onkeydown="solveMaybe(event)"
+          autofocus
+          id="knownLetters"
+          type="text"
+          maxlength="8"
+          spellcheck="false"
+          placeholder="known letters"
+        ><br><div class="hr"></div><br>
+        <span style="color: #0f8">enter <b>known positions</b><br>
+        with "_" for blank spots<br>
+        e.g. _ei_d might be "field"<br>
+        <span style="font-size:.7em;">exclude any "known letters" from above</span><br></span>
+        <input
+          oninput="validate()"
+          onkeydown="solveMaybe(event)"
+          maxlength="8"
+          autofocus
+          id="placement"
+          type="text"
+          spellcheck="false"
+          placeholder="placement"
+        ><br><div class="hr"></div><br>
+        <span style="color: #ccc">enter <b>letters to exclude</b><br>
+        if any...<br></span>
+        <input
+          oninput="validate()"
+          onkeydown="solveMaybe(event)"
+          maxlength="8"
+          autofocus
+          id="exclude"
+          type="text"
+          spellcheck="false"
+          placeholder="exclude"
+        ><br><br>
+        <div class="validStatus" id="validStatus"></div><br>
+        <button id="solveButton" onclick="solve()" disabled>solve [enter]</button>
+        <div id="resultDiv"></div>
+      </div>
+    </div>
+    <script>
+      KnownLetters = document.querySelector('#knownLetters')
+      solveButton = document.querySelector('#solveButton')
+      resultDiv = document.querySelector('#resultDiv')
+      Placement = document.querySelector('#placement')
+      Exclude = document.querySelector('#exclude')
+      gtimer=0
+      running=false
+      setInterval(()=>{
+        gtimer+=1/60
+        if(resultDiv.innerHTML.indexOf('working')!=-1){
+          workingLine=(lines=resultDiv.innerHTML.split('<br>'))[0]
+          workingLine=('.'.repeat((gtimer*60|0)%8)) + 'working' + ('.'.repeat((gtimer*60|0)%8))
+          lines[0]=running?workingLine:''
+          resultDiv.innerHTML=lines.filter(v=>v).join('<br>')
+        }
+      }, 1000/60)
+      validate=()=>{
+        KnownLetters.value = KnownLetters.value = KnownLetters.value.split('').filter(v=>!(+v>=0||+v<=9)).join('').trim()
+        let val = Placement.value = Placement.value.split('').filter(v=>!(+v>=0||+v<=9)).join('')
+        let exclude = Exclude.value = Exclude.value.split('').filter(v=>!(+v>=0||+v<=9)).join('')
+        let valid = val.length>2
+        if(val){
+          validStatus.style.background = valid ? '#0f84' : '#f004'
+          validStatus.style.color = valid ? '#8ff' : '#faa'
+          solveButton.style.color = valid ? '#4f8' : '#888'
+          solveButton.style.background = valid ? '#8f84' : '#333'
+        } else {
+          validStatus.innerHTML =''
+          solveButton.style.color = valid ? '#4f8' : '#888'
+          solveButton.style.background = valid ? '#8f84' : '#333'
+        }
+        return valid
+      }
+      solveMaybe=e=>{
+        if(e.keyCode==13 && validate()){
+          solve()
+        }
+      }
+      
+      
+      solve=()=>{
+        running=true
+        valic=false
+        solveButton.style.color = '#888'
+        solveButton.style.background = '#333'
+        let letters = KnownLetters.value ? KnownLetters.value : '_'
+        let placement = Placement.value
+        let exclude = Exclude.value ? Exclude.value : '\'_\''
+        KnownLetters.value = Placement.value = Exclude.value = ''
+        KnownLetters.focus()
+        let req = new XMLHttpRequest()
+        req.open('GET', 'wordle.php?letters='+letters+'&placement='+placement+'&exclude='+exclude, true)
+
+        resultDiv.innerHTML = '<span style="color: #fff;">working...</span>'
+        res = []
+        req.onprogress=e=>{
+          res=(req.response || req.responseXML).split("\n")
+          if(res.length>1){
+            resultDiv.innerHTML += '<br>' + res[res.length-2]
+          }
+          validStatus.innerHTML =''
+          solveButton.style.color = '#888'
+          solveButton.style.background = '#333'
+        }
+        req.onload = ()=> {
+          running=false
+          resultDiv.innerHTMl=resultDiv.innerHTML.replace('working...', '')
+					if(res.length<2){
+            resultDiv.innerHTML += '<br><br>no results :(<br>'
+          }
+          resultDiv.innerHTML += '<br><br><span style="color: #fff;">*** complete ***</span>'
+        }
+        req.send()
+      }
+
+      
+      c=document.createElement('canvas');
+      (main=document.querySelectorAll('.main')[0]).appendChild(c)
+      rsz=window.onresize=()=>{
+        x=c.getContext('2d')
+        c.style.position = 'absolute'
+        main=document.querySelectorAll('.main')[0]
+        rect=main.getBoundingClientRect()
+        c.style.left=0
+        c.style.top=0
+        c.style.width=rect.width + 'px'
+        c.style.height=rect.height + 'px'
+        c.width=c.clientWidth
+        c.height=c.clientHeight
+        x.fillStyle='#0f0'
+        x.fillRect(0,0,c.width,c.height)
+      }
+      rsz()
+      t=0
+      S=Math.sin
+      C=Math.cos
+      Rn=Math.random
+      Draw=()=>{
+        if(!t){
+          R=(Rl,Pt,Yw,m)=>{X=S(p=(A=(M=Math).atan2)(X,Y)+Rl)*(d=(H=M.hypot)(X,Y)),Y=C(p)*d,Y=S(p=A(Y,Z)+Pt)*(d=H(Y,Z)),Z=C(p)*d,X=S(p=A(X,Z)+Yw)*(d=H(X,Z)),Z=C(p)*d;if(m)X+=oX,Y+=oY,Z+=oZ}
+          Q=()=>[c.width/2+X/Z*1200,c.height/2+Y/Z*1200]
+          G=500
+          ST=Array(2e3).fill().map(v=>{
+            X=(Rn()-.5)*G
+            Y=(Rn()-.5)*G
+            Z=Rn()*G
+            return [X,Y,Z]
+          })
+          wordleImage = new Image()
+          go=false
+          wordleImage.onload=()=>{
+            go=true
+          }
+          wordleImage.src='35Uvh.jpg'
+        }
+        c.width|=0
+        oX=oY=0,oZ=0
+        Rl=S(t/15)*3,Pt=0,Yw=0
+        ST.map(v=>{
+          X=v[0]
+          Y=v[1]
+          Z=v[2]-=1.5
+          if(Z<0)v[2]+=G
+          R(Rl,Pt,Yw,1)
+          l=Q()
+          x.globalAlpha=1/(1+H(c.width/2-l[0],c.height/2-l[1])**12/999999999999999999999999999999)*Math.min(1,Z/20)
+          s=Math.min(500,2e3/(Z**1.25))
+          x.fillStyle='#fff'
+          x.fillRect(l[0]-s/2,l[1]-s/2,s,s)
+        })
+        x.globalAlpha=1
+        
+        if(go){
+          x.globalAlpha=.85      
+          x.drawImage(wordleImage,tx=c.width-wordleImage.width/3,ty=20,wordleImage.width/3,wordleImage.height/3)
+          x.globalAlpha=1
+          x.lineJoin=x.lineCap='round'
+          x.beginPath()
+          x.lineTo(tx+1,ty+50)
+          x.lineTo(605,132)
+          x.strokeStyle='#fa04'
+          x.lineWidth=12
+          x.stroke()
+          x.strokeStyle='#fa0'
+          x.lineWidth/=4
+          x.stroke()
+          x.strokeStyle='#0f44'
+          x.lineWidth=12
+          x.beginPath()
+          x.lineTo(tx+135,ty+85)
+          x.lineTo(605,280)
+          x.stroke()
+          x.strokeStyle='#0f4'
+          x.lineWidth/=4
+          x.stroke()
+          x.strokeStyle='#8884'
+          x.lineWidth=12
+          x.beginPath()
+          x.lineTo(tx+104,ty+150)
+          x.lineTo(605,393)
+          x.stroke()
+          x.strokeStyle='#bbb'
+          x.lineWidth/=4
+          x.stroke()
+        }
+        
+        t+=1/60
+        requestAnimationFrame(Draw)
+      }
+      Draw()
+    </script>
+  </body>
+</html>
+
+

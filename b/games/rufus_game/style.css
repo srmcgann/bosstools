@@ -1,0 +1,29 @@
+body,html{
+  background: #000;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+#canvas{
+  background:#0000;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+#canvas:focus{
+  outline: none;
+}
+body{
+  font-family:arial, tahoma;
+  background:#000 url(grass.jpg);
+  background-position: center;
+  background-size: cover;
+  color:#fff;
+}
+@font-face {
+  font-family: 'Square721';
+  src: url('https://srmcgann.github.io/puyopuyo/TT0246M_.TTF') format('truetype'),
+     url('https://srmcgann.github.io/puyopuyo/TT0246M_.otf') format('opentype'),
+     url('https://srmcgann.github.io/puyopuyo/TT0246M_.woff') format('woff');
+}
