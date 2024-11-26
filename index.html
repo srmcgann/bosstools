@@ -238,12 +238,89 @@
               title="example texture"
               style = "background-image: url(shortyThumb.jpg)"
             ></div>
-            <font style="font-size: .7em;">example texture</font>
           </div>
           <div style="clear: both;"></div>
         </div>
       </div>
+    
+      <div class="card">
+        <b class="title">CODE PLAYGROUND
+          <button onclick="handleInput({keyCode: 13}, 'a', '')">launch</button>
+        </b>
+        <br>
+        <div class="desc">
+          A code playground, similar to jsfiddle or codepen.io
+          <div class="thumbContainer">
+            <div
+              class="thumbnail"
+              title="example texture"
+              style = "background-image: url(codePlaygroundThumb.jpg)"
+            ></div>
+          </div>
+          logins for this page also log you in to the other connected tools: Audio Cloud, Words, and Games (below)
+          <div style="clear: both;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <b class="title">AUDIO CLOUD
+          <button onclick="handleInput({keyCode: 13}, 'e', '')">launch</button>
+        </b>
+        <br>
+        <div class="desc">
+          A repository for audio specifically. Common formats are supported
+          <div class="thumbContainer">
+            <div
+              class="thumbnail"
+              title="example texture"
+              style = "background-image: url(audiocloudThumb.jpg)"
+            ></div>
+          </div>
+          logins for this page also log you in to the other connected tools: Code Playground, Words, and Games
+          <div style="clear: both;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <b class="title">GAMES
+          <button onclick="handleInput({keyCode: 13}, 'b', '')">launch</button>
+        </b>
+        <br>
+        <div class="desc">
+          A browswer game showcase
+          <div class="thumbContainer">
+            <div
+              class="thumbnail"
+              title="example texture"
+              style = "background-image: url(gamesThumb.jpg)"
+            ></div>
+          </div>
+          logins for this page also log you in to the other connected tools: Code Playground, Words, and Audio Cloud
+          <div style="clear: both;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <b class="title">WORDS
+          <button onclick="handleInput({keyCode: 13}, 'c', '')">launch</button>
+        </b>
+        <br>
+        <div class="desc">
+          A blog / notepad tool
+          <div class="thumbContainer">
+            <div
+              class="thumbnail"
+              title="example texture"
+              style = "background-image: url(wordsThumb.jpg)"
+            ></div>
+          </div>
+          logins for this page also log you in to the other connected tools: Code Playground, Games, and Audio Cloud
+          <div style="clear: both;"></div>
+        </div>
+      </div>
+      
     </div>
+
     
     <script>
       handleInput = (e, tool, t) => {
