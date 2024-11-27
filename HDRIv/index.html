@@ -80,7 +80,7 @@
           const container = document.getElementById( 'container' )
           camera = new THREE.PerspectiveCamera( 100, 16/9, .05, 1e6)
           scene = new THREE.Scene()
-          const geometry = new THREE.SphereGeometry( 1e4, 32, 120 )
+          const geometry = new THREE.SphereGeometry( 1e4, 1024, 1024 )
           geometry.scale( - 1, 1, 1 )
           var texture
           if(url.toLowerCase().indexOf('.mp4') != -1 ||

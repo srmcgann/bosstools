@@ -65,7 +65,7 @@
           camera = new THREE.PerspectiveCamera( 100, 16/9, .05, 1e6)
           scene = new THREE.Scene()
           //scene.background = new THREE.Color( 0xffffff );
-          const geometry = new THREE.SphereGeometry( 1e4, 64, 128 )
+          const geometry = new THREE.SphereGeometry( 1e4, 1024, 1024 )
           geometry.scale( - 1, 1, 1 )
           var texture
           if(url.toLowerCase().indexOf('.mp4') != -1 ||
@@ -145,7 +145,8 @@
           init(url)
         }else{
           //init('https://i.imgur.com/hBdxXm0.mp4')
-          init('https://srmcgann.github.io/skyboxes/HDRI/26.jpg')
+          //init('https://srmcgann.github.io/skyboxes/HDRI/26.jpg')
+          init('https://srmcgann.github.io/skyboxes2/HDRI/1.jpg')
         }
 
       `
