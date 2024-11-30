@@ -7,7 +7,7 @@
       html, body{
         background-color: #000;
         background-repeat: no-repeat;
-        background-image: url(https://bosstools.mooo.com/assets/uploads/2cjkNh.jpeg);
+        background-image: url(https://boss.mindhackers.org/assets/uploads/2cjkNh.jpeg);
         background-position: center center;
         background-size: cover;
         font-family: monospace;
@@ -97,6 +97,28 @@
         border-radius: 5px;
         cursor: pointer;
         min-width: 145px;
+      }
+      .playlistLink{
+        padding: 2px;
+        padding-left: 10px;
+        padding-right: 10px;
+        min-width: calc(100% - 32px);
+        border: 1px solid #800;
+        border-radius: 10px;
+        color: #f00;
+        background: #000;
+        text-align: left;
+        line-height: 1.2em;
+        display: inline-block;
+        position: relative;
+        margin: 2px;
+        text-decoration: none;
+        font-weight: 900;
+        text-shadow: 0px 0px 4px #80f;
+      }
+      .playlistLink:hover{
+        background: #201;
+        color: #f88;
       }
     </style>
   </head>
@@ -349,18 +371,116 @@
         </div>
       </div>
 
-    </div>
+      <div class="card">
+        <b class="title">cantelope links
+          <!--
+          <button
+            disabled onclick="handleInput({keyCode: 13}, 'wordleSolver', '')"
+            title="use links below"
+          >launch</button>
+          -->
+        </b>
+        <br>
+        <div class="desc">
+          <br>
+          <a href ="https://roadtrip.twilightparadox.com/" target="_blank" class="playlistLink">roadtrip (random)</a><br>
+          <a href ="https://orbital.twilightparadox.com/" target="_blank" class="playlistLink">orbital</a><br>
+          <a href ="https://winehouse.twilightparadox.com/" target="_blank" class="playlistLink">amy winehouse</a><br>
+          <a href ="https://eighties.twilightparadox.com/" target="_blank" class="playlistLink">eighties music</a><br>
+          <a href ="https://mixedup.twilightparadox.com/" target="_blank" class="playlistLink">mixed up - the cure</a><br>
+          <a href ="https://depechemode.twilightparadox.com/" target="_blank" class="playlistLink">depeche mode</a><br>
+          <a href ="https://flowerface.twilightparadox.com/" target="_blank" class="playlistLink">flower face</a><br>
+          <a href ="https://whr.twilightparadox.com/" target="_blank" class="playlistLink">whitehot robot songs</a><br>
+          <a href ="https://vids.twilightparadox.com/" target="_blank" class="playlistLink">whitehot robot music videos</a><br>
+          <a href ="https://roadtrip.twilightparadox.com/aion/" target="_blank" class="playlistLink">aion - dead can dance</a><br>
+          <a href ="https://gifs.twilightparadox.com/" target="_blank" class="playlistLink">gifs</a><br>
+          <a href ="https://drawings.twilightparadox.com/" target="_blank" class="playlistLink">drawings</a><br>
+          <a href ="https://srmcgann.github.io/photography/" target="_blank" class="playlistLink">photography</a><br>
+          <br>
+          <center>No login is required</center><br>
+          <div style="clear: both;"></div>
+        </div>
+      </div>
 
+      <div class="card">
+        <b class="title">EMPHASIS (v1)
+          <button onclick="handleInput({keyCode: 13}, 'emphasis1', '')">launch</button>
+        </b>
+        <br>
+        <input type="text" class="textInput" placeholder="text to emphasize... use %20 for line breaks" autofocus
+          onkeydown="handleInput(event, 'emphasis1', this)"
+        >
+        <div class="desc">
+          a tool for emphasizing a short amount of text.
+          <div class="thumbContainer">
+            <div
+              onclick="handleInput({keyCode: 13}, 'emphasis1', '')"
+              class="thumbnail"
+              title="example emphasis"
+              style = "background-image: url(https://i.imgur.com/qltXnSs.png)"
+            ></div>
+            <font style="font-size: .7em;">example</font>
+          </div>
+          use %20 for line-breaks. <br><br> copy the resulting URL to share it...
+          <div style="clear: both;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <b class="title">EMPHASIS (v2)
+          <button onclick="handleInput({keyCode: 13}, 'emphasis2', '')">launch</button>
+        </b>
+        <br>
+        <input type="text" class="textInput" placeholder="text to emphasize... use \n for line breaks" autofocus
+          onkeydown="handleInput(event, 'emphasis2', this)"
+        >
+        <div class="desc">
+          a tool for emphasizing a short amount of text.
+          <div class="thumbContainer">
+            <div
+              onclick="handleInput({keyCode: 13}, 'emphasis2', '')"
+              class="thumbnail"
+              title="example emphasis"
+              style = "background-image: url(https://i.imgur.com/JZjJ7Lx.jpeg)"
+            ></div>
+            <font style="font-size: .7em;">example</font>
+          </div>
+          use \n for line-breaks. <br><br> copy the resulting URL to share it...          
+          <div style="clear: both;"></div>
+        </div>
+      </div>
+
+
+    </div>
 
     <script>
       handleInput = (e, tool, t) => {
         setTimeout(()=>{
           if(e.keyCode == 13){
-            let el    = document.createElement('a')
-            el.href   = `${location.origin}/${tool}${t ? '/?url=' + t.value : ''}`
-            el.target = '_blank'
-            el.click()
-            t.value   = ''
+            let el
+            switch(tool){
+              case 'emphasis1':
+                el    = document.createElement('a')
+                el.href   = `${'https://emphasis.bizuit.com/' + (t ? '/?c=' + t.value : '')}`
+                el.target = '_blank'
+                el.click()
+                t.value   = ''
+              break
+              case 'emphasis2':
+                el    = document.createElement('a')
+                el.href   = `${'https://srmcgann.github.io/emphasis2/' + (t ? '/?c=' + t.value : '')}`
+                el.target = '_blank'
+                el.click()
+                t.value   = ''
+              break
+              default:
+                el    = document.createElement('a')
+                el.href   = `${location.origin}/${tool}${t ? '/?url=' + t.value : ''}`
+                el.target = '_blank'
+                el.click()
+                t.value   = ''
+              break
+            }
           }
         },0)
       }
