@@ -2370,12 +2370,13 @@
             sbctx.save()
             sbctx.scale(-1,1)
 
-            sbctx.drawImage(imageFile, -scratchBuffer.width/2,0,scratchBuffer.width/2, scratchBuffer.height)
+            //sbctx.drawImage(imageFile, -scratchBuffer.width/2,0,scratchBuffer.width/2, scratchBuffer.height)
+            
             //sbctx.drawImage(imageFile, -scratchBuffer.width,0,scratchBuffer.width/4, scratchBuffer.height)
 
             sbctx.restore()
 
-            sbctx.drawImage(imageFile,  scratchBuffer.width/2,0,scratchBuffer.width/2, scratchBuffer.height)
+            sbctx.drawImage(imageFile,  0,0,scratchBuffer.width/1, scratchBuffer.height)
             //sbctx.drawImage(imageFile,  0,0,scratchBuffer.width/4, scratchBuffer.height)
             
             scratchData = sbctx.getImageData(0,0,scratchBuffer.width,scratchBuffer.height)
@@ -2395,11 +2396,24 @@
               Y = h-(j/w|0)
               
               ty = h/2 + (h/2 - Y)
-              mod = 1 - C(Math.PI*2/h*ty)
-              tx = w/2 + (w/2 - X) * mod**.15
-              tx |= 0
-              ty |= 0
-              idx = (tx + ty*w) * 4
+              mod = (1 - C(Math.PI*2/h*ty))*2
+              if(j%w > w/2) {
+                tx = w/2+((w-(j%w))/2-w/8) * mod
+                if(tx < 0 || tx > w){
+                  tx = w/2+(X/2-w/8) * mod
+                }
+                tx |= 0
+                ty |= 0
+                idx = (tx + ty*w) * 4
+              }else{
+                tx = w/2+(X/2-w/8) * mod
+                if(tx < 0 || tx > w){
+                  tx = w/2+((w-(j%w))/2-w/8) * mod
+                }
+                tx |= 0
+                ty |= 0
+                idx = (tx + ty*w) * 4
+              }
               red   = l[idx+0]
               green = l[idx+1]
               blue  = l[idx+2]
