@@ -2396,24 +2396,21 @@
               Y = h-(j/w|0)
               
               ty = h/2 + (h/2 - Y)
-              mod = (1 - C(Math.PI*2/h*ty))*2
+              mod = (1 - C(Math.PI*2/h*ty))**.5*2
               if(j%w > w/2) {
                 tx = w/2+((w-(j%w))/2-w/8) * mod
                 if(tx < 0 || tx > w){
                   tx = w/2+(X/2-w/8) * mod
                 }
-                tx |= 0
-                ty |= 0
-                idx = (tx + ty*w) * 4
               }else{
                 tx = w/2+(X/2-w/8) * mod
                 if(tx < 0 || tx > w){
                   tx = w/2+((w-(j%w))/2-w/8) * mod
                 }
-                tx |= 0
-                ty |= 0
-                idx = (tx + ty*w) * 4
               }
+              tx |= 0
+              ty |= 0
+              idx = (tx + ty*w) * 4
               red   = l[idx+0]
               green = l[idx+1]
               blue  = l[idx+2]
