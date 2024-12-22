@@ -78,7 +78,7 @@
         if(assetURL.toLowerCase().indexOf('.mp4') != -1 ||
           assetURL.toLowerCase().indexOf('.webm') != -1){
           resType = 'video'
-          //asset = document.createElement('video')
+          asset = document.createElement('video')
           loop = location.href.split('loop=')
           if(loop.length > 1){
             loop = loop[1].split('&')[0]
