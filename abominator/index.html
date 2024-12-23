@@ -192,13 +192,16 @@
         scene.add( ambientLight );
         scene.add( light );
         
+        var button = document.querySelectorAll('#button')[0]
         if(resType == 'video'){
-          var button = document.querySelectorAll('#button')[0]
-          button.style.display='block'
-          button.onclick = () => {
-            vid.play()
-            button.style.display='none'
-          }
+          setTimeout(()=>{
+            button = document.querySelectorAll('#button')[0]
+            button.style.display='block'
+            button.onclick = () => {
+              vid.play()
+              button.style.display='none'
+            }
+          }, 500)
         }
 
 
