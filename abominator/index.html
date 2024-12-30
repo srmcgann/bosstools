@@ -48,7 +48,7 @@
       ✔ clipAlpha -> proper input
       ✔ better default reflection map for videos, classic desert/sky gradient or solve
       ✔ play button @ vid, optionally disabled with autoplay URL switch
-      * 'random' URL switch, for abritrary flyer motion
+      ✔ 'random' URL switch, for abritrary flyer motion
       * docs / cheatsheet
     -->
 
@@ -68,7 +68,7 @@
       import { TeapotGeometry } from 'https://threejs.org/examples/jsm/geometries/TeapotGeometry.js';
 
       var Rn = Math.random
-      var abomCt, vid, oSpeed
+      var abomCt, vid, oSpeed, random, randomPositions
       var camera, ambientLight, light, container, material, shader
       var mesh, scene, geometry, textureLoader, texture, renderer
       var vs, fs, baseUniforms, t = 0, renderTarget, finalRender
@@ -164,8 +164,6 @@
         renderHeight= 1080
         camera.aspect = renderWidth / renderHeight;
         let l = 1
-        //baseUniforms.resolution.value = new THREE.Vector2(renderWidth / l, renderHeight / l)
-        //uniforms.resolution.value = new THREE.Vector2(renderWidth / l, renderHeight / l)
         renderer.setSize(renderWidth, renderHeight, false)
         renderTargets.map(v=>v.setSize(renderWidth, renderHeight))
         camera.updateProjectionMatrix();
@@ -195,6 +193,20 @@
       for(var i = 5; i--;) setTimeout(()=>windowResize(), 200 * i)
       window.addEventListener( 'resize', windowResize );
 
+      if(location.href.split('?random').length > 1 || location.href.split('&random').length > 1){
+        random = 1
+        var iRv = 10
+        randomPositions = Array(abomCt).fill().map( v => {
+          let X = Rn() * renderWidth
+          let Y = Rn() * renderHeight
+          let vx = (Rn()-.5) * iRv * (.25 + Rn() * .75)
+          let vy = (Rn()-.5) * iRv * (.25 + Rn() * .75)
+          return new THREE.Vector4(X,Y,vx,vy)
+        })
+      }else{
+        random = 0
+        randomPositions = []
+      }
 
       var gamma = location.href.split('gamma=')
       if(gamma.length > 1){
@@ -233,36 +245,37 @@
           backgroundType = 'image'
         }
       }else{ //default
-      
-        vid = document.createElement('video')
-        vid.crossOrigin = true
-        var loop = location.href.split('loop=')
-        if(loop.length > 1){
-          loop = loop[1].split('&')[0]
-          if(loop == 'true') vid.loop = true
+        let useVideoAsDefault = false
+        if(useVideoAsDefault){
+          vid = document.createElement('video')
+          vid.crossOrigin = true
+          var loop = location.href.split('loop=')
+          if(loop.length > 1){
+            loop = loop[1].split('&')[0]
+            if(loop == 'true') vid.loop = true
+          }else{
+            vid.loop = true
+          }
+          var playbackspeed = location.href.split('playbackspeed=')
+          if(playbackspeed.length > 1){
+            playbackspeed = playbackspeed[1].split('&')[0]
+          }else{
+            playbackspeed = 1
+          }
+          vid.playbackRate = vid.defaultPlaybackRate = playbackspeed
+          vid.src = 'https://srmcgann.github.io/skyboxes/videos/starfield_looped.mp4'
+          //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/pulse_darker.mp4'
+          //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/tracks3.mp4'
+          //vid.src = 'https://srmcgann.github.io/skyboxes/videos/cuberoom_test.mp4'
+          //vid.src = 'https://srmcgann.github.io/skyboxes5/videos/cluds.mp4'
+          //vid.src = 'https://i.imgur.com/i69mR4O.mp4'
+          //vid.src = 'https://i.imgur.com/bvxtAbo.mp4'
+          background = new THREE.VideoTexture( vid )
+          backgroundType = 'video'
         }else{
-          vid.loop = true
+          background = textureLoader.load( 'https://drawings.twilightparadox.com/rotated/34b3a55a0b163ae24362988c0caaf092.jpg' )
+          backgroundType = 'image'
         }
-        var playbackspeed = location.href.split('playbackspeed=')
-        if(playbackspeed.length > 1){
-          playbackspeed = playbackspeed[1].split('&')[0]
-        }else{
-          playbackspeed = 1
-        }
-        vid.playbackRate = vid.defaultPlaybackRate = playbackspeed
-        vid.src = 'https://srmcgann.github.io/skyboxes/videos/starfield_looped.mp4'
-        //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/pulse_darker.mp4'
-        //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/tracks3.mp4'
-        //vid.src = 'https://srmcgann.github.io/skyboxes/videos/cuberoom_test.mp4'
-        //vid.src = 'https://srmcgann.github.io/skyboxes5/videos/cluds.mp4'
-        //vid.src = 'https://i.imgur.com/i69mR4O.mp4'
-        //vid.src = 'https://i.imgur.com/bvxtAbo.mp4'
-        background = new THREE.VideoTexture( vid )
-        backgroundType = 'video'
-        
-        
-        //background = textureLoader.load( 'https://drawings.twilightparadox.com/rotated/34b3a55a0b163ae24362988c0caaf092.jpg' )
-        //backgroundType = 'image'
       }
       
       if(backgroundType == 'video'){
@@ -322,20 +335,21 @@
 
       shader = {
         uniforms: baseUniforms = {
-          'baseTexture': { value: null },
-          'opacity': { value: 1.0 },
-          flyers: {value: sprites},
-          flyerSize: {value: flyerSize},
-          speed: {value: speed},
-          baseTexture: {value: texture },
-          mouse: {value: new THREE.Vector2(window.mx, window.my)},
-          t: { value: t },
-          gamma: { value: gamma },
-          genScale: { value: genScale },
+          t: {value: t},
           pass: {value: -1},
           passes: {value: -1},
+          speed: {value: speed},
+          gamma: {value: gamma},
+          random: {value: random},
           finalRender: {value: 0},
-          resolution: { value: new THREE.Vector2(renderWidth, renderHeight) },
+          'opacity': {value: 1.0},
+          flyers: {value: sprites},
+          genScale: {value: genScale},
+          flyerSize: {value: flyerSize},
+          baseTexture: {value: texture},
+          mouse: {value: new THREE.Vector2(window.mx, window.my)},
+          randomPos: {value: new THREE.Vector2(renderWidth/2, renderHeight/2)},
+          resolution: {value: new THREE.Vector2(renderWidth, renderHeight)},
         },
         vertexShader: vs =
           `varying vec2 vUv;
@@ -353,11 +367,13 @@
           uniform sampler2D baseTexture;
           uniform float t;
           uniform float speed;
+          uniform int random;
           uniform float genScale;
           uniform float pass;
           uniform float flyerSize;
           uniform float passes;
           uniform vec2 mouse;
+          uniform vec2 randomPos;
           uniform float gamma;
           varying vec2 vUv;
 
@@ -422,8 +438,14 @@
             }else{
               if(passes != -1.0 && finalRender != 1){
                 p = M_PI * 2.0 / passes * pass + t / 1.5 * speed;
-                float X2 = resolution.x/2.0 + sin(p) * resolution.x / 4.0;
-                float Y2 = resolution.y/2.0 + sin(p*2.0) * resolution.y / 4.0;
+                float X2, Y2;
+                if(random == 1){
+                  X2 = randomPos.x;
+                  Y2 = randomPos.y;
+                }else{
+                  X2 = resolution.x/2.0 + sin(p) * resolution.x / 4.0;
+                  Y2 = resolution.y/2.0 + sin(p*2.0) * resolution.y / 4.0;
+                }
                 float ax = X2 - X;
                 float ay = Y2 - Y;
                 p = atan2(ax, ay) + t * speed + pass;
@@ -590,6 +612,15 @@
           if(i < renderTargets.length -1){
             uniforms.baseTexture.value = renderTarget.texture
             uniforms.pass.value = i
+            if(random){
+              let X = randomPositions[i].x + randomPositions[i].z * speed
+              let Y = randomPositions[i].y + randomPositions[i].w * speed
+              if(X < 0 || X > renderWidth) randomPositions[i].z *= -1
+              if(Y < 0 || Y > renderHeight) randomPositions[i].w *= -1
+              randomPositions[i].x += randomPositions[i].z * speed
+              randomPositions[i].Y += randomPositions[i].w * speed
+              uniforms.randomPos.value = randomPositions[i]
+            }
             renderer.setRenderTarget(renderTargets[i+1])
             renderer.render(finalScene, camera)
           }
@@ -602,7 +633,6 @@
         renderer.setRenderTarget(null)
         renderer.render(finalScene, camera)
         
-
         requestAnimationFrame(draw)
       }
       
