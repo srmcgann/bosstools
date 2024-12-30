@@ -9,6 +9,23 @@
         background: linear-gradient(-45deg, #333, #000);
         overflow: hidden;
       }
+      #button{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        border: none;
+        border-radius: 5px;
+        background: #40f;
+        color: #fff;
+        text-shadow: 2px 2px 2px #000;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 3px;
+        min-width: 50px;
+        display: none;
+      }
       canvas{
         display: none;
         border: 0px solid #fff3;
@@ -25,6 +42,17 @@
       }
     </style>
   </head>
+  <body>
+    <!--
+      to do
+      ✔ clipAlpha -> proper input
+      ✔ better default reflection map for videos, classic desert/sky gradient or solve
+      ✔ play button @ vid, optionally disabled with autoplay URL switch
+      * 'random' URL switch, for abritrary flyer motion
+      * docs / cheatsheet
+    -->
+
+    <button id="button">play</button>
     <div id="container"></div>
     <canvas id=c></canvas>
     <script type="importmap">
@@ -40,7 +68,7 @@
       import { TeapotGeometry } from 'https://threejs.org/examples/jsm/geometries/TeapotGeometry.js';
 
       var Rn = Math.random
-      var abomCt, vid
+      var abomCt, vid, oSpeed
       var camera, ambientLight, light, container, material, shader
       var mesh, scene, geometry, textureLoader, texture, renderer
       var vs, fs, baseUniforms, t = 0, renderTarget, finalRender
@@ -59,6 +87,20 @@
         speed= +speed[1].split('&')[0]
       }else{
         speed = 1
+      }
+      
+      var genScale= location.href.split('genscale=')
+      if(genScale.length > 1){
+        genScale= Math.min(1, Math.max(0, +genScale[1].split('&')[0]))
+      }else{
+        genScale = .33
+      }
+      
+      var flyerSize= location.href.split('flyersize=')
+      if(flyerSize.length > 1){
+        flyerSize= +flyerSize[1].split('&')[0]
+      }else{
+        flyerSize = 200
       }
       
       
@@ -103,12 +145,8 @@
       
       var func = navigator.userAgent.toLowerCase().indexOf('firefox') != -1 ? "onwheel" : "onmousewheel"
       window[func]= e => {
-        uniforms['genScale'].value += e.deltaY/2e3
-        uniforms['genScale'].value = Math.min(1, Math.max(0, uniforms['genScale'].value))
-        //let delta = camera.fov
-        //delta += e.deltaY/25
-        //camera.fov = Math.min(140, Math.max(30, delta))
-        //camera.updateProjectionMatrix()
+        uniforms.genScale.value += e.deltaY/2e3
+        uniforms.genScale.value = Math.min(1, Math.max(0, uniforms.genScale.value))
       }
       
       window.onmousemove = e => {
@@ -186,16 +224,7 @@
             playbackspeed = 1
           }
           vid.playbackRate = vid.defaultPlaybackRate = playbackspeed
-          
-          var autoplay = location.href.split('autoplay=')
-          if(autoplay.length > 1){
-            autoplay = autoplay[1].split('&')[0]
-          }
           vid.src = assetURL
-          if(autoplay){
-            vid.muted = true
-            vid.play()
-          }
           background = new THREE.VideoTexture( vid )
           backgroundType = 'video'
         }else{
@@ -204,7 +233,7 @@
           backgroundType = 'image'
         }
       }else{ //default
-      /*
+      
         vid = document.createElement('video')
         vid.crossOrigin = true
         var loop = location.href.split('loop=')
@@ -221,31 +250,45 @@
           playbackspeed = 1
         }
         vid.playbackRate = vid.defaultPlaybackRate = playbackspeed
-        
-        var autoplay = location.href.split('autoplay=')
-        if(autoplay.length > 1){
-          autoplay = autoplay[1].split('&')[0]
-        }
-        vid.src = 'https://srmcgann.github.io/skyboxes/videos/starfield.mp4'
+        vid.src = 'https://srmcgann.github.io/skyboxes/videos/starfield_looped.mp4'
         //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/pulse_darker.mp4'
         //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/tracks3.mp4'
         //vid.src = 'https://srmcgann.github.io/skyboxes/videos/cuberoom_test.mp4'
         //vid.src = 'https://srmcgann.github.io/skyboxes5/videos/cluds.mp4'
         //vid.src = 'https://i.imgur.com/i69mR4O.mp4'
         //vid.src = 'https://i.imgur.com/bvxtAbo.mp4'
-        if(autoplay){
-          vid.muted = true
-          vid.play()
-        }
         background = new THREE.VideoTexture( vid )
         backgroundType = 'video'
-        */
-        background = textureLoader.load( 'https://drawings.twilightparadox.com/rotated/34b3a55a0b163ae24362988c0caaf092.jpg' )
-        backgroundType = 'image'
+        
+        
+        //background = textureLoader.load( 'https://drawings.twilightparadox.com/rotated/34b3a55a0b163ae24362988c0caaf092.jpg' )
+        //backgroundType = 'image'
+      }
+      
+      if(backgroundType == 'video'){
+        var autoplay = location.href.split('autoplay')
+        if(autoplay.length > 1){
+          setTimeout(()=>{
+            button.style.display = 'none'
+            vid.muted = true
+            vid.play()
+          }, 500)
+        }else{
+          let button = document.querySelectorAll('#button')[0]
+          button.style.display = 'block'
+          oSpeed = speed
+          speed = 0
+          button.onclick = () => {
+            speed = oSpeed
+            baseUniforms.speed.value = speed
+            uniforms.speed.value = speed
+            vid.play()
+            button.style.display='none'
+          }
+        }
       }
 
-
-      var clouds = textureLoader.load('https://srmcgann.github.io/photography/fc402d02cd642483899593e8803319d1.jpg')
+      var clouds = textureLoader.load('https://i.ibb.co/zFQ34Nz/envmap1.jpg')
       clouds.mapping = THREE.EquirectangularReflectionMapping
       var burst = textureLoader.load('https://srmcgann.github.io/temp/burst.png')
       var star1 = textureLoader.load('https://srmcgann.github.io/stars/star1.png')
@@ -282,13 +325,13 @@
           'baseTexture': { value: null },
           'opacity': { value: 1.0 },
           flyers: {value: sprites},
-          clipAlpha: {value: .25},
+          flyerSize: {value: flyerSize},
           speed: {value: speed},
           baseTexture: {value: texture },
           mouse: {value: new THREE.Vector2(window.mx, window.my)},
           t: { value: t },
           gamma: { value: gamma },
-          genScale: { genScale: .33 },
+          genScale: { value: genScale },
           pass: {value: -1},
           passes: {value: -1},
           finalRender: {value: 0},
@@ -312,21 +355,21 @@
           uniform float speed;
           uniform float genScale;
           uniform float pass;
+          uniform float flyerSize;
           uniform float passes;
           uniform vec2 mouse;
           uniform float gamma;
           varying vec2 vUv;
-          uniform float clipAlpha;
 
           float hypot (float a, float b){
             return sqrt(a*a+b*b);
           }
 
           float atan2 (float a, float b) {
-            if(b > 0.0) return atan(a / b);
             if(a == 0.0) return b < 0.0 ? M_PI : 0.0;
-            if(b < 0.0) return atan(a / b) + (a < 0.0 ? -M_PI : M_PI);
             if(b == 0.0) return a < 0.0 ? -M_PI / 2.0 : M_PI / 2.0;
+            if(b > 0.0) return atan(a / b);
+            if(b < 0.0) return atan(a / b) + (a < 0.0 ? -M_PI : M_PI);
           }
 
           vec4 merge (vec4 col1, vec4 col2){
@@ -343,9 +386,7 @@
             float cz = 220.0 + costheta * 200.0;
             float n = (200.0 / cz + 1.0) * genScale;
             
-            //d = d1 - (n * 200.0 + n * 1e3 / (2.0 + pow(1.0 + d, 3.0)/1e3)) * 20.0 / cz / (1.0 + passes);
             d = d1 - (n*200.0) / (1.0+pow(1.0+d1, 3.0)/1e6);
-            //d = max(0.0, d1-150.0 * genScale);
             p = atan2(a, b);
             X3 = min(resolution.x, max(0.0, X2 + sin(p) * d));
             Y3 = min(resolution.y, max(0.0, Y2 + cos(p) * d));
@@ -359,30 +400,23 @@
             float X, Y, ls, p, d;
             X = gl_FragCoord.x;
             Y = gl_FragCoord.y;
-            ls = 250.0;
+            ls = flyerSize;
             if(finalRender == 1){
               float ax = (mouse.x - X);
               float ay = (mouse.y - Y);
-              p = atan2(ax, ay) + t * 1.0 + pass;
+              p = atan2(ax, ay) + t * speed + pass;
               d = hypot(ax, ay);
-              if(d < ls){
+              if(flyerSize > 0.0 && d < ls){
                 ax = sin(p) * d;
                 ay = cos(p) * d;
-                vec2 inVert = vec2((ax + ls/2.0) / ls,
-                                  (ay + ls/2.0) / ls);
-                vec4 col1 = texture2D( flyers[6], inVert);
-                if(col1.a >= clipAlpha){
-                  vec4 col2 = texel;
-                  col = merge(col1, col2);
-                  //vec4 col3 = texture2D( flyers[0], inVert);
-                  //col = merge(col, col3);
-                }else{
-                  vec2 inVert = blackhole(mouse.x, mouse.y);
-                  col = texture2D( baseTexture, inVert/resolution.xy / 1.0);
-                }
+                vec2 inVert = vec2(ax + ls/2.0, ay + ls/2.0);
+                vec4 col1 = texture2D( flyers[6], inVert/ls);
+                vec2 inVert2 = blackhole(mouse.x, mouse.y);
+                vec4 col2 = texture2D( baseTexture, inVert2/resolution.xy);
+                col = merge(col1, col2);
               }else{
                 vec2 inVert = blackhole(mouse.x, mouse.y);
-                col = texture2D( baseTexture, inVert/resolution.xy / 1.0);
+                col = texture2D( baseTexture, inVert/resolution.xy);
               }
               col = col * gamma;
             }else{
@@ -390,26 +424,18 @@
                 p = M_PI * 2.0 / passes * pass + t / 1.5 * speed;
                 float X2 = resolution.x/2.0 + sin(p) * resolution.x / 4.0;
                 float Y2 = resolution.y/2.0 + sin(p*2.0) * resolution.y / 4.0;
-                float ax = (X2 - X);
-                float ay = (Y2 - Y);
-                p = atan2(ax, ay) + t * 1.0 + pass;
+                float ax = X2 - X;
+                float ay = Y2 - Y;
+                p = atan2(ax, ay) + t * speed + pass;
                 d = hypot(ax, ay);
-                if(d < ls){
-                  //vec4 col1 = vec4(1.0, 0.0, 0.0, 0.75);
+                if(flyerSize > 0.0 && d < ls){
                   ax = sin(p) * d;
                   ay = cos(p) * d;
-                  vec2 inVert = vec2((ax + ls/2.0) / ls,
-                                    (ay + ls/2.0) / ls);
-                  vec4 col1 = texture2D( flyers[6], inVert);
-                  if(col1.a >= clipAlpha){
-                    vec4 col2 = texel;
-                    col = merge(col1, col2);
-                    //vec4 col3 = texture2D( flyers[0], inVert);
-                    //col = merge(col, col3);
-                  }else{
-                    vec2 inVert = blackhole(X2, Y2);
-                    col = texture2D( baseTexture, inVert/resolution.xy);
-                  }
+                  vec2 inVert = vec2(ax + ls/2.0, ay + ls/2.0);
+                  vec4 col1 = texture2D( flyers[6], inVert / ls);
+                  vec2 inVert2 = blackhole(X2, Y2);
+                  vec4 col2 = texture2D( baseTexture, inVert2/resolution.xy);
+                  col = merge(col1, col2);
                 }else{
                   vec2 inVert = blackhole(X2, Y2);
                   col = texture2D( baseTexture, inVert/resolution.xy);
@@ -469,7 +495,7 @@
             specular: 0xffffff,
             shininess: 20,
             flatShading: false,
-            envMap: background,
+            //envMap: background,
             reflectivity: 1,
             //map: texture,
             side: THREE.DoubleSide,
@@ -479,6 +505,7 @@
         })
         if(backgroundType == 'image') material.envMap = background
         if(backgroundType == 'video') material.envMap = clouds
+
         material.blending = THREE.CustomBlending; 
         mesh = new THREE.Mesh( geometry, material )
         mesh.name = 'teapot'
@@ -495,7 +522,7 @@
       })
       //uniforms.baseTexture.value = finalRender.texture
       uniforms.opacity.value = 1.0
-      uniforms.genScale.value = .2
+      //uniforms.genScale.value = .2
       var finalMaterial = new THREE.ShaderMaterial( {
         vertexShader: vs, fragmentShader: fs,
         uniforms
@@ -523,13 +550,13 @@
             break
             case 'teapot':
               if(idx){
-                el.rotation.z += Math.cos((idx+t) * speed) * .02 * speed
-                el.rotation.y += Math.sin((idx+t) * speed) * .02 * speed
+                el.rotation.z += Math.cos((idx+t * speed)) * .02 * speed
+                el.rotation.y += Math.sin((idx+t * speed)) * .02 * speed
                 
                 let X = el.position.x
                 let Y = el.position.y
                 let Z = el.position.z + ofz
-                let p = Math.atan2(Y, Z) + Math.cos(t/8) * .02
+                let p = Math.atan2(Y, Z) + Math.cos(t/8 * speed) * .02 * speed
                 let d = Math.hypot(Y, Z)
                 el.position.y = Math.sin(p) * d
                 el.position.z = Math.cos(p) * d - ofz
@@ -537,8 +564,8 @@
             default:
             break
               if(idx){
-                el.rotation.z += .0025
-                el.rotation.y += .025
+                el.rotation.z += .0025 * speed
+                el.rotation.y += .025 * speed
               }
             break
           }
