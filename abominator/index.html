@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <title>abominator</title>
     <style>
       body, html{
         margin: 0;
-        background: #000;
-        color: #fff;
-        font-family: monospace;
-        min-height: 100vh;
+        height: 100vh;
         background: linear-gradient(-45deg, #333, #000);
         overflow: hidden;
       }
       canvas{
         display: none;
-        border: 3px solid #fff3;
+        border: 0px solid #fff3;
         position: absolute;
         background: #04f1;
         left: 50%;
@@ -25,743 +23,125 @@
       canvas:focus{
         outline: none;
       }
-      #button{
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 1000;
-        border: none;
-        border-radius: 5px;
-        background: #40f;
-        color: #fff;
-        text-shadow: 2px 2px 2px #000;
-        cursor: pointer;
-        font-size: 20px;
-        padding: 3px;
-        min-width: 50px;
-        display: none;
-      }
     </style>
   </head>
-  <body>
-    <button id="button">play</button>
     <div id="container"></div>
     <canvas id=c></canvas>
     <script type="importmap">
       {
         "imports": {
           "three": "https://threejs.org/build/three.module.js",
-          "three/addons/": "https://threejs.org/examples/jsm/"
-        }
+          "three/addons/": "https://threejs.org/examples/jsm/Addons.js"
+        } 
       }
     </script>
     <script type="module">
-      import * as THREE from 'three';
-    
+      import * as THREE from 'three'
       import { TeapotGeometry } from 'https://threejs.org/examples/jsm/geometries/TeapotGeometry.js';
-      var camera, scene, renderer
-
-      var material, loadScene, sceneLoaded = false
-      var geometry, mesh, reflectionMap, amap, textureLoader
-      var uniforms, uniformAdds, path, urls, vid
-      var scenes, light, ambientLight, autoplay
-
-      var asset, resType, playbackspeed, loop
-      var assetURL = location.href.split('url=')
-
-
-      textureLoader = new THREE.TextureLoader()
-
-      if(assetURL.length > 1){
-        assetURL = assetURL[1].split('&')[0]
-        if(assetURL.toLowerCase().indexOf('.mp4') != -1 ||
-          assetURL.toLowerCase().indexOf('.webm') != -1){
-          resType = 'video'
-          asset = document.createElement('video')
-          loop = location.href.split('loop=')
-          if(loop.length > 1){
-            loop = loop[1].split('&')[0]
-            loop = loop == 'true'
-          }
-          playbackspeed = location.href.split('playbackspeed=')
-          if(playbackspeed.length > 1){
-            playbackspeed = playbackspeed[1].split('&')[0]
-          }else{
-            playbackspeed = 1
-          }
-          asset.playbackRate = asset.defaultPlaybackRate = +playbackspeed
-          autoplay = location.href.split('autoplay=')
-        }else{
-           resType = 'image'
-        }
-      }else{
-        
-        resType = 'video'
-        loop = location.href.split('loop=')
-        if(loop.length > 1){
-          loop = loop[1].split('&')[0]
-          loop = loop == 'true'
-        }
-        playbackspeed = location.href.split('playbackspeed=')
-        if(playbackspeed.length > 1){
-          playbackspeed = playbackspeed[1].split('&')[0]
-        }else{
-          playbackspeed = 1
-        }
-        //assetURL = 'https://i.imgur.com/BS9frFZ.mp4'
-        assetURL = 'https://i.imgur.com/lxCuPJN.mp4?res=4'
-        
-        autoplay = location.href.split('autoplay=')
-        //resType = 'image'
-        //assetURL = 'https://i.ibb.co/ctk1gtL/basic-grid.jpg'
-        if(autoplay.length > 1){
-          autoplay = autoplay[1].split('&')[0]
-        }
-      }
-
-      let isUserInteracting = false,
-          lon = 0, lat = 0,
-          phi = 0, theta = 0,
-          onPointerDownPointerX = 0,
-          onPointerDownPointerY = 0,
-          onPointerDownLon = 0,
-          onPointerDownLat = 0
-
-      const distance = 400
-
 
       var Rn = Math.random
-
-      var HSVFromRGB = (R, G, B) => {
-        let R_=R/256
-        let G_=G/256
-        let B_=B/256
-        let Cmin = Math.min(R_,G_,B_)
-        let Cmax = Math.max(R_,G_,B_)
-        let val = Cmax //(Cmax+Cmin) / 2
-        let delta = Cmax-Cmin
-        let sat = Cmax ? delta / Cmax: 0
-        let min=Math.min(R,G,B)
-        let max=Math.max(R,G,B)
-        let hue = 0
-        if(delta){
-          if(R>=G && R>=B) hue = (G-B)/(max-min)
-          if(G>=R && G>=B) hue = 2+(B-R)/(max-min)
-          if(B>=G && B>=R) hue = 4+(R-G)/(max-min)
-        }
-        hue*=60
-        while(hue<0) hue+=360;
-        while(hue>=360) hue-=360;
-        return [hue, sat, val]
-      }
-
-      var RGBFromHSV = (H, S, V) => {
-        while(H<0) H+=360;
-        while(H>=360) H-=360;
-        let C = V*S
-        let X = C * (1-Math.abs((H/60)%2-1))
-        let m = V-C
-        let R_, G_, B_
-        if(H>=0 && H < 60)    R_=C, G_=X, B_=0
-        if(H>=60 && H < 120)  R_=X, G_=C, B_=0
-        if(H>=120 && H < 180) R_=0, G_=C, B_=X
-        if(H>=180 && H < 240) R_=0, G_=X, B_=C
-        if(H>=240 && H < 300) R_=X, G_=0, B_=C
-        if(H>=300 && H < 360) R_=C, G_=0, B_=X
-        let R = (R_+m)*256
-        let G = (G_+m)*256
-        let B = (B_+m)*256
-        return [R,G,B]
-      }
-
-
-      function init(){
-      
-        const container = document.getElementById( 'container' )
-
-        camera = new THREE.PerspectiveCamera( 100, 16/9, .01, 1e8 );
-        camera.position.z = 0;
-
-        ambientLight = new THREE.AmbientLight( 0xffffff, 3.5 );
-        light = new THREE.DirectionalLight( 0xFFFFFF, 3.0 );
-        light.position.set( 0.32, 0.39, 0.7 );
-
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color( 0x000000 );
-        scene.add( ambientLight );
-        scene.add( light );
-        
-        var button = document.querySelectorAll('#button')[0]
-        if(resType == 'video'){
-          setTimeout(()=>{
-            button = document.querySelectorAll('#button')[0]
-            button.style.display='block'
-            button.onclick = () => {
-              vid.play()
-              button.style.display='none'
-            }
-          }, 500)
-        }
-
-
-        loadScene = () =>{
-        
-          var vs = `
-            uniform vec4 color;
-            varying vec3 vPosition;
-            varying vec4 vColor;
-            void main(){
-             vPosition = position;
-             vColor = color;
-             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-            }
-          `
-
-          var fs = `
-            #define M_PI 3.1415926535897932384626433832795
-            uniform vec2 mouse;
-            uniform float t;
-            uniform float genScale;
-            uniform vec2 resolution;
-            uniform sampler2D textures[1];
-            uniform int itemID;
-            varying vec3 vPosition;
-            varying vec4 vColor;
-
-            vec4 merge (vec4 inCol, vec4 outCol){
-              vec3 temp = inCol.rgb * (inCol.a - outCol.a * inCol.a) + outCol.rgb * outCol.a;
-              outCol = vec4(temp.r, temp.g, temp.b, 1.0);
-              
-              return outCol;
-            }
-            
-            vec4 RGBFromHSV (float H, float S, float V, float A){
-              //while(H<0.0) H+=360.0;
-              //while(H>=360.0) H-=360.0;
-              float C = V*S;
-              float X = C * (1.0-abs(mod(H/60.0,2.0)-1.0));
-              float m = V-C;
-              float R_, G_, B_;
-              if(H>=0.0 && H < 60.0)    R_=C, G_=X, B_=0.0;
-              if(H>=60.0 && H < 120.0)  R_=X, G_=C, B_=0.0;
-              if(H>=120.0 && H < 180.0) R_=0.0, G_=C, B_=X;
-              if(H>=180.0 && H < 240.0) R_=0.0, G_=X, B_=C;
-              if(H>=240.0 && H < 300.0) R_=X, G_=0.0, B_=C;
-              if(H>=300.0 && H < 360.0) R_=C, G_=0.0, B_=X;
-              float R = (R_+m)*255.0;
-              float G = (G_+m)*255.0;
-              float B = (B_+m)*255.0;
-              return vec4(R, G, B, A);
-            }
-            
-            float hypot (float a, float b){
-              return sqrt(a*a+b*b);
-            }
-            
-            // angle between 2 points in radians (relative to each other)
-            float atan2 (float a, float b) {
-              if(b > 0.0) return atan(a / b);
-              if(a == 0.0) return b < 0.0 ? M_PI : 0.0;
-              if(b < 0.0) return atan(a / b) + (a < 0.0 ? -M_PI : M_PI);
-              if(b == 0.0) return a < 0.0 ? -M_PI / 2.0 : M_PI / 2.0;
-            }
-            
-            void main(){
-            
-
-
-              vec4 col;
-              vec2 vert = gl_FragCoord.xy/resolution;
-              switch(itemID){
-                case 0:
-                
-                  vec2 st = gl_FragCoord.xy;
-                  float X, Y, Z;
-                  float s = 360.0;
-                  float theta = -t * .5 + M_PI * 1.5;
-                  float cx = resolution.x / 2.0;// + sin(theta) * s;
-                  float cy = resolution.y / 2.0;
-                  
-                  float d = 0.0, p = 0.0, X2 = 0.0, Y2 = 0.0;
-                  int sd = 5;
-                  float ls = 200.0;
-                  float ar[2];
-                  ar[0] = 0.0;
-                  ar[1] = 0.0;
-                  for(int i=0; i<sd + 1 ; i++){
-                    X = st.x / 2.0 + resolution.x/4.0;
-                    Y = st.y / 2.0 + resolution.y/4.0;
-                  
-                    if(i<sd){
-                      cx = resolution.x / 2.0 + sin(p = M_PI*2.0/float(sd+1)* pow(float(i),2.3)+ t * 2.0 + float(i)) * ls * 2.0;
-                      cy = resolution.y / 2.0 + cos(p*1.5) * ls;
-                    }else{
-                      cx = mouse.x / 2.0 + resolution.x/4.0;
-                      cy = mouse.y / 2.0 + resolution.y/4.0;
-                    }
-                  
-                    float a = X - cx;
-                    float b = Y - cy;
-                    float costheta = -.75; //cos(theta);
-                    float cz = 220.0 + costheta * 200.0;
-                    float n = 200.0 / cz + 30.0 * genScale - 2.0;
-                    
-                    vec4 c, Ca, Cb;
-                    vec4 repCol;
-                    Ca = texture2D(textures[0], vert );
-                    c = Ca;
-                    
-                    float d1 = hypot(a, b);
-                    //if(d < sqrt(n*150.0)){
-                    //  repCol = vec4(0.0, 0.0, 0.0, 1.0);
-                    //  c = merge(c, repCol);
-                    //} else {
-                      //d -= (n * 7.0 + n * 500.0 / (2.0 + pow(1.0 + d, 2.0)/1e4)) * 6.0 / cz;
-                      d = max(0.0, d1-100.0);
-                      p = atan2(a, b);
-                      X2 = min(resolution.x, max(0.0, cx + sin(p) * d));
-                      Y2 = min(resolution.y, max(0.0, cy + cos(p) * d));
-                      ar[0] += X2;
-                      ar[1] += Y2;
-                    //}
-                  }
-                  X2 = ar[0] / float(sd-2) - resolution.x/1.75;
-                  Y2 = ar[1] / float(sd-2) - resolution.y/1.75;
-                  vert = vec2(X2/resolution.x*1.15,
-                              Y2/resolution.y*1.15);
-                  vec4 Ca = texture2D(textures[0], vert );
-                  vec4 c = Ca;
-                  col = c;
-                break;
-                default:
-                  col = vColor;
-                break;
-              }
-              gl_FragColor = col;
-            }
-          `
-          /*
-          var burst = textureLoader.load('https://srmcgann.github.io/temp/burst.png')
-          var star1 = textureLoader.load('https://srmcgann.github.io/stars/star1.png')
-          var star2 = textureLoader.load('https://srmcgann.github.io/stars/star2.png')
-          var star3 = textureLoader.load('https://srmcgann.github.io/stars/star3.png')
-          var star4 = textureLoader.load('https://srmcgann.github.io/stars/star4.png')
-          var star5 = textureLoader.load('https://srmcgann.github.io/stars/star5.png')
-          var star6 = textureLoader.load('https://srmcgann.github.io/stars/star6.png')
-          var star7 = textureLoader.load('https://srmcgann.github.io/stars/star7.png')
-          var star8 = textureLoader.load('https://srmcgann.github.io/stars/star8.png')
-          var star9 = textureLoader.load('https://srmcgann.github.io/stars/star9.png')
-          var stars         = Array(9).fill().map((v,i)=>eval(`star${i+1}`))
-          
-          var burstFull = textureLoader.load('https://i.ibb.co/nb6mGr7/burst-Full.png')
-          //var space = textureLoader.load('https://srmcgann.github.io/skyboxes7/HDRI/space.jpg')
-          //var space = textureLoader.load('https://cdn.pixabay.com/photo/2012/11/28/10/16/stars-67616_1280.jpg')
-          //var space = textureLoader.load('https://cdn.pixabay.com/photo/2020/03/30/13/29/space-4984262_1280.jpg')
-          var space = textureLoader.load('https://i.ibb.co/C6jMYqW/newSpace.jpg')
-          */
-
-
-          
-          window.mx = 960
-          window.my = 540
-          window.onmousemove = e => {
-            if(typeof can != 'undefined') {
-              let rect = can.getBoundingClientRect()
-              window.mx = (e.pageX - rect.left) / can.clientWidth * can.width
-              window.my = (e.pageY - rect.top) / can.clientHeight * can.height
-            }
-          }
-
-          var func = navigator.userAgent.toLowerCase().indexOf('firefox') != -1 ? "onwheel" : "onmousewheel"
-          window[func]= e => {
-            scenes.map(scene => {
-              scene.material.uniforms['genScale'].value += e.deltaY/2e3
-              scene.material.uniforms['genScale'].value = Math.min(1, Math.max(0, scene.material.uniforms['genScale'].value))
-            })
-            let delta = camera.fov
-            delta += e.deltaY/25
-            camera.fov = Math.min(140, Math.max(30, delta))
-            camera.updateProjectionMatrix()
-          }
-          
-
-          //amap = textureLoader.load('https://boss.mindhackers.org/assets/uploads/26qtmG.jpeg');
-          //amap = textureLoader.load('https://boss.mindhackers.org/assets/uploads/2bgaeE.jpeg');
-          //reflectionMap = textureLoader.load( 'https://srmcgann.github.io/skyboxes3/HDRI/redCluds.jpg' )
-          
-          switch(resType){
-            case 'video':
-              vid = document.createElement('video')
-              vid.loop = loop
-              vid.crossOrigin = true
-              vid.src = assetURL
-              vid.playbackRate = vid.defaultPlaybackRate = playbackspeed
-              if(autoplay){
-                vid.muted = true
-                //vid.play()
-                button = document.querySelectorAll('#button')[0].style.display = 'none'
-              }
-              asset = new THREE.VideoTexture( vid )
-            break
-            case 'image':
-              asset = textureLoader.load( assetURL )
-            break
-          }
-          
-
-          //reflectionMap.mapping = THREE.EquirectangularReflectionMapping
-
-          scenes = []
-          var baseUniforms = {
-                //textures: { value: [...stars, space, burstFull, asset] },
-                textures: { value: [asset] },
-                mouse: {value: new THREE.Vector2(window.mx, window.my)},
-                t: { value: 0 },
-                genScale: {value: .1},
-                resolution: { value: new THREE.Vector2(1920, 1080) },
-              }
-          var loadGeometryForShader = (
-                geometry,                            // required
-                ox=0, oy=0, oz=0,                    // optional
-                uniformAdds = {},                    // optional
-                material=new THREE.ShaderMaterial( { // optional
-                  vertexShader: vs, fragmentShader: fs,
-                } ),
-          ) => {
-            if(typeof material?.uniforms == 'undefined' || !Object.keys(material.uniforms).length) {
-              material.uniforms = {}
-              Object.keys(baseUniforms).forEach((key, val) => {
-                material.uniforms[key] = baseUniforms[key]
-              })
-            }
-            if(Object.keys(uniformAdds).length){
-              Object.keys(uniformAdds).forEach((key, val) => {
-                material.uniforms[key] = uniformAdds[key]
-              })
-            }
-            material.uniforms['itemID'] = { value: scenes.length}
-            
-            material.blending = THREE.CustomBlending; 
-            mesh = new THREE.Mesh( geometry, material )
-            mesh.position.x = ox
-            mesh.position.y = oy
-            mesh.position.z = oz
-            scenes = [...scenes, { material, mesh, geometry}]
-            scene.add( mesh );
-          }
-
-
-          geometry = new THREE.SphereGeometry( 1e4, 64, 240 )
-          geometry.scale( - 1, 1, 1 )
-          
-          var texture = asset
-
-          //texture.colorSpace = THREE.SRGBColorSpace
-          texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
-            texture.wrapS = THREE.RepeatWrapping
-            texture.wrapT = THREE.RepeatWrapping
-            //texture.repeat.set( 1, 1 )
-          //material = new THREE.MeshBasicMaterial( {
-          material = new THREE.ShaderMaterial( {
-            map: texture,
-            vertexShader: vs, fragmentShader: fs,
-            uniforms: {
-              //textures: { value: [...stars, space, burstFull, asset] },
-              textures: { value: [asset] },
-              mouse: {value: new THREE.Vector2(window.mx, window.my)},
-              t: { value: 0 },
-              genScale: {value: .1},
-              resolution: { value: new THREE.Vector2(1920, 1080) },
-            }
-          } )
-          
-
-          //geometry = new THREE.PlaneGeometry( 320, 180 );
-          uniformAdds = { color: { value: new THREE.Vector4(0.0, 1.0, 0.0, .5) } }
-          loadGeometryForShader(geometry, 0, 0, -190, uniformAdds, material)
-
-          /*
-          var cl = 5
-          var rw = 5
-          var br = 5
-          var sp = 1e3
-          
-          geometry = new THREE.SphereGeometry( 200,  32, 16);
-          //geometry = new TeapotGeometry( 100);
-          uniformAdds = {}
-
-          material = new THREE.MeshPhongMaterial( {
-            specular: 0x888888,
-            shininess: 50,
-            flatShading: false,
-            //envMap: reflectionMap,
-            map: reflectionMap,
-            side: THREE.DoubleSide,
-            //alphaMap: amap,
-            color: 0xffffff,
-            //transparent: true,
-          } );
-          
-          Array(cl*rw*br).fill().map((v, i) => {
-            var lx = ((i%cl)-cl/2 + .5) * sp
-            var ly = (((i/cl|0)%rw)-rw/2 + .5) * sp
-            var lz = ((i/cl/rw|0)-br/2 + .5) * sp
-            loadGeometryForShader(geometry, lx, ly, lz, uniformAdds, material)
-            scenes[scenes.length-1].mesh.rotation.z = Math.PI
-            scenes[scenes.length-1].mesh.rotation.x = 0//Math.PI
-            scenes[scenes.length-1].mesh.rotation.y = Math.PI
-          })
-          */
-
-          sceneLoaded = true
-        }
-        
-        function onWindowResize() {
-          setTimeout(()=>{
-            camera.aspect = 1920 / 1080;
-            renderer.setSize( window.can.clientWidth, window.can.clientHeight );
-            camera.updateProjectionMatrix();
-          }, 0)
-        }
-        window.addEventListener( 'resize', onWindowResize );
-
-        renderer = new THREE.WebGLRenderer( {antialias: true} )
-        renderer.logarithmicDepthBuffer = true 
-        renderer.setSize( 1920, 1080 )
-        renderer.setPixelRatio( window.devicePixelRatio );
-        renderer.setAnimationLoop( animate )
-        container.appendChild( renderer.domElement )
-
-        document.addEventListener( 'pointerdown', onPointerDown )
-        document.addEventListener( 'pointermove', onPointerMove )
-        document.addEventListener( 'pointerup', onPointerUp )
-        document.addEventListener( 'touchstart', onPointerDown )
-        document.addEventListener( 'touchmove', onPointerMove )
-        document.addEventListener( 'touchend', onPointerUp )
-        loadScene()
-      }
-
-      function onPointerDown( event ) {
-        isUserInteracting = true
-        onPointerDownPointerX = event.clientX
-        onPointerDownPointerY = event.clientY
-        onPointerDownLon = lon
-        onPointerDownLat = lat
-      }
-
-      function onPointerMove( event ) {
-        if ( isUserInteracting === true ) {
-          var mag = .01 + camera.fov/450
-          lon = ( onPointerDownPointerX - event.clientX ) * mag + onPointerDownLon
-          lat = ( onPointerDownPointerY - event.clientY ) * mag + onPointerDownLat
-        }
-      }
-
-      function onPointerUp() {
-        isUserInteracting = false
-      }
-
-      function animate() {
-        if(!sceneLoaded) return
-        t += 1/60
-        scenes.map((scene, idx) => {
-          if(0)switch(idx){
-            case 0:
-            break
-            default:
-              switch(idx%3){
-                case 0:
-                  scene.mesh.rotation.x += S(idx*4) * .01
-                  scene.mesh.rotation.y += C(idx*4) * .02
-                  break
-                case 1:
-                  scene.mesh.rotation.y += S(idx*4) * .01
-                  scene.mesh.rotation.z += C(idx*4) * .02
-                  break
-                case 2:
-                  scene.mesh.rotation.x += S(idx*4) * .01
-                  scene.mesh.rotation.z += C(idx*4) * .02
-                  break
-              }            
-            break
-          }
-          
-          let RGB = RGBFromHSV(t*50, 1,.5)
-          var s = '#', l
-          for(var m=0;m<3;m++){
-            l=(RGB[m]|0).toString(16)+''
-            if(l.length<2) l = '0' + l
-            s += l
-          }
-          //scene.material.specular = 0xff0000
-        
-          scene.material.uniforms[ 'mouse' ].value.x = window.mx;
-          scene.material.uniforms[ 'mouse' ].value.y = window.can.height - window.my;
-          scene.material.uniforms[ 'resolution' ].value.x = window.can.width;
-          scene.material.uniforms[ 'resolution' ].value.y = window.can.height;
-          scene.material.uniforms[ 't' ].value = t  //performance.now() / 1000;
-          
-          //scene.material.needsUpdate = true
-        })
-
-        lat = Math.max( - 89.9, Math.min( 89.9, lat ) )
-        phi = ( 90 - lat )/180*Math.PI
-        theta = lon/180*Math.PI
-        camera.position.x = distance * Math.sin( phi ) * Math.cos( theta )
-        camera.position.y = distance * Math.cos( phi )
-        camera.position.z = distance * Math.sin( phi ) * Math.sin( theta )
-        camera.rotation.y += 10
-        camera.lookAt( 0, 0, 0 )
-        renderer.render( scene, camera )
-      }
-
-      init()
-    </script>
-  
-    <script>
-      c = document.querySelector('#c')
-      c.tabIndex = 0
-      x_ = c.getContext('2d')
-      c.width = 1920
-      c.height = 1080
-
-      camMode = 'HDRI'
-      HDRIwidth = c.width
-
-      outputAspectRatio = 16/9
-      output = document.createElement('canvas')
-      octx = output.getContext('2d')
-      output.width = c.width
-      output.height = output.width / outputAspectRatio
-      showOutput = false // HDRI view, for recording 
-      showRender = false   // actual pipe to environment, for render eval etc
-      showPreview = false // thumbnail in upper right 
-      // (only visible in default or HDRI output, not render)
-
-      if(showRender){
-        outputAspectRatio = 2
-        showOutput = true
-        showPreview = false
-        c.style.display = 'none'
+      var abomCt, vid
+      var camera, ambientLight, light, container, material, shader
+      var mesh, scene, geometry, textureLoader, texture, renderer
+      var vs, fs, baseUniforms, t = 0, renderTarget, finalRender
+      var background, finalScene, backgroundType, zoomLevel
+      var renderWidth = 1920
+      var renderHeight = 1080
+      var abomCt = location.href.split('flyers=')
+      if(abomCt.length > 1){
+        abomCt = Math.min(15, Math.max(0, +abomCt[1].split('&')[0]))
       }else{
-        //showPreview = true
-        //showOutput = false
-        setTimeout(()=>{
-          c.style.display = 'block'
-          c.style.borderRadius = showOutput ? '0' : '10px'
-          c.style.border = showOutput ? 'none' : '3px solid #fff3'
-          c.style.margin = showOutput ? 0 : 10
-        }, 0)
+        abomCt = 3
       }
+      
+      var speed= location.href.split('speed=')
+      if(speed.length > 1){
+        speed= +speed[1].split('&')[0]
+      }else{
+        speed = 1
+      }
+      
+      
+      container = document.getElementById( 'container' )
 
-      // tempBuffer, needed for optional preview [P]
-      tempBuffer = document.createElement('canvas')
-      tempBuffer.width = c.width
-      tempBuffer.height = c.height
-      tbctx = tempBuffer.getContext('2d')
+      textureLoader = new THREE.TextureLoader()
+      camera = new THREE.PerspectiveCamera( 50, 16/9, .01, 1e8 )
+      scene = new THREE.Scene();
+      finalScene = new THREE.Scene()
+      renderer = new THREE.WebGLRenderer( {antialias: true, preserveDrawingBuffer: true} )
+      renderer.logarithmicDepthBuffer = true
+      
+      renderer.setSize( renderWidth, renderHeight )
+      renderer.setClearColor( 0x000000, 1 )
+      renderer.setPixelRatio( window.devicePixelRatio );
+      window.can = renderer.domElement
+      container.appendChild( renderer.domElement )
+      
+      var renderTargets = Array(abomCt + 1).fill().map(v => {
+        let ret = new THREE.WebGLRenderTarget(renderWidth, renderHeight, {
+          minFilter: THREE.NearestFilter,  // cancel antialiasing
+          magFilter: THREE.NearestFilter,  // "
+        })
+        //ret.colorSpace = THREE.SRGBColorSpace
+        return ret
+      })
 
-      C = Math.cos
-      S = Math.sin
-      t = 0
-      T = Math.tan
-
-      rsz = window.onresize = () =>{
-        let b = document.body
-        let margin = showOutput ? 0 : 10
-        let n
-        let d = showOutput ? 1/outputAspectRatio : .5625
-        c.style.borderRadius = showOutput ? '0' : '10px'
-        c.style.border = showOutput ? 'none' : '3px solid #fff3'
-        //c.width = 1920 
-        c.height = c.width * d
-        output.width = c.width
-        output.height = output.width * d
-        if(b.clientHeight/b.clientWidth > d){
-          c.style.width = `${(n=b.clientWidth) - margin*2}px`
-          c.style.height = `${n*d - margin*2}px`
-        }else{
-          c.style.height = `${(n=b.clientHeight) - margin*2}px`
-          c.style.width = `${n/d - margin*2}px`
+      ambientLight = new THREE.AmbientLight( 0xffffff, 1.0 )
+      light = new THREE.DirectionalLight( 0xffffff, 2.0 );
+      light.position.set( 4, 4, 10 ).normalize();
+      scene.add(light);
+      scene.add(ambientLight);
+      //light = new THREE.DirectionalLight( 0xFFFFFF, 3.0 )
+      //light.position.set( 0.032, 0.039, 0.07 )
+      //scene.add( ambientLight );
+      //scene.add( light );
+      //finalScene.add( ambientLight );
+      //finalScene.add( light );
+      
+      window.mx = 960
+      window.my = 540
+      
+      var func = navigator.userAgent.toLowerCase().indexOf('firefox') != -1 ? "onwheel" : "onmousewheel"
+      window[func]= e => {
+        uniforms['genScale'].value += e.deltaY/2e3
+        uniforms['genScale'].value = Math.min(1, Math.max(0, uniforms['genScale'].value))
+        //let delta = camera.fov
+        //delta += e.deltaY/25
+        //camera.fov = Math.min(140, Math.max(30, delta))
+        //camera.updateProjectionMatrix()
+      }
+      
+      window.onmousemove = e => {
+        if(typeof can != 'undefined') {
+          let rect = can.getBoundingClientRect()
+          window.mx = (e.pageX - rect.left) / can.clientWidth * can.width
+          window.my = (e.pageY - rect.top) / can.clientHeight * can.height
         }
       }
-      rsz()
+      
+      var windowResize = () => {
+        zoomLevel = Math.round(window.devicePixelRatio*100)
+        renderer.setPixelRatio( window.devicePixelRatio / (zoomLevel / 100))
+        renderWidth = 1920
+        renderHeight= 1080
+        camera.aspect = renderWidth / renderHeight;
+        let l = 1
+        //baseUniforms.resolution.value = new THREE.Vector2(renderWidth / l, renderHeight / l)
+        //uniforms.resolution.value = new THREE.Vector2(renderWidth / l, renderHeight / l)
+        renderer.setSize(renderWidth, renderHeight, false)
+        renderTargets.map(v=>v.setSize(renderWidth, renderHeight))
+        camera.updateProjectionMatrix();
 
-      keyTimer = 0
-      keyTimerInterval = .25
-      keys = Array(256).fill(false)
-      window.onkeyup = e => {
-        keyTimer = 0
-        keys[e.keyCode] = false
-      }
-
-      window.onkeydown = e => {
-        keys[e.keyCode] = true
-        if(keyTimer <= t){
-          keyTimer = t + keyTimerInterval
-          if(e.keyCode == 72) {
-            showOutput = !showOutput
-            if(showRender){
-              if(typeof can != 'undefined') {
-                outputAspectRatio = 2
-                showOutput = true
-                showPreview = false
-                can.style.display = 'block'
-                c.style.display = 'none'
-                rsz2()
-              }
-            }else{
-              showPreview = true
-              if(typeof can != 'undefined') can.style.display = 'none'
-              c.style.display = 'block'
-              rsz()
-            }
-          }
-          if(e.keyCode == 80) {
-            showPreview = !showPreview
-          }
-          if(e.keyCode == 82) {
-            showRender = !showRender
-            if(showRender){
-              outputAspectRatio = 2
-              showPreview = false
-              showOutput = true
-              can.style.display = 'block'
-              c.style.display = 'none'
-            }else{
-              showPreview = true
-              can.style.display = 'none'
-              c.style.display = 'block'
-            }
-          }
-          if(e.keyCode == 70) {
-            if(showRender || outputAspectRatio == 16/9){
-              outputAspectRatio = 2
-            }else{
-              outputAspectRatio = 16/9
-            }
-            rsz()
-          }
-        }
-      }
-
-      window.addEventListener('resize', rsz2 = () =>{
-        can = document.querySelectorAll('canvas')[0]
+        window.can = document.querySelectorAll('canvas')[0]
         if(typeof can != 'undefined'){
-
-          /* special */
-            can.style.display = 'block'
-          /***********/
-
           can.tabindex = 0
           can.focus()
-
           let b = document.body
           let margin = 10
           let n
           let d = .5625
           can.style.borderRadius = '10px'
-          can.style.border = '3px solid #fff3'
+          can.style.border = '0px solid #fff3'
           if(b.clientHeight/b.clientWidth > d){
             can.style.width = `${(n=b.clientWidth) - margin*2}px`
             can.style.height = `${n*d - margin*2}px`
@@ -769,15 +149,437 @@
             can.style.height = `${(n=b.clientHeight) - margin*2}px`
             can.style.width = `${n/d - margin*2}px`
           }
+          
+          camera.updateProjectionMatrix();
         }
-        if(showRender){
-          showRender = false
-          setTimeout(()=>{
-            showRender = true
-          }, 0)
+
+      }
+      for(var i = 5; i--;) setTimeout(()=>windowResize(), 200 * i)
+      window.addEventListener( 'resize', windowResize );
+
+
+      var gamma = location.href.split('gamma=')
+      if(gamma.length > 1){
+        gamma = gamma[1].split('&')[0]
+      }else{
+        gamma = 1
+      }
+
+      var assetURL = location.href.split('url=')
+      if(assetURL.length > 1){
+        assetURL = assetURL[1].split('&')[0]
+        if(assetURL.toLowerCase().indexOf('.mp4') != -1 ||
+           assetURL.toLowerCase().indexOf('.webm') != -1){
+          vid = document.createElement('video')
+          vid.crossOrigin = true
+          var loop = location.href.split('loop=')
+          if(loop.length > 1){
+            loop = loop[1].split('&')[0]
+            if(loop != 'false') vid.loop = true
+          }else{
+            vid.loop = true
+          }
+          var playbackspeed = location.href.split('playbackspeed=')
+          if(playbackspeed.length > 1){
+            playbackspeed = playbackspeed[1].split('&')[0]
+          }else{
+            playbackspeed = 1
+          }
+          vid.playbackRate = vid.defaultPlaybackRate = playbackspeed
+          
+          var autoplay = location.href.split('autoplay=')
+          if(autoplay.length > 1){
+            autoplay = autoplay[1].split('&')[0]
+          }
+          vid.src = assetURL
+          if(autoplay){
+            vid.muted = true
+            vid.play()
+          }
+          background = new THREE.VideoTexture( vid )
+          backgroundType = 'video'
+        }else{
+          background = textureLoader.load( assetURL )
+          background.repeat.set( 1,  1)
+          backgroundType = 'image'
         }
+      }else{ //default
+      /*
+        vid = document.createElement('video')
+        vid.crossOrigin = true
+        var loop = location.href.split('loop=')
+        if(loop.length > 1){
+          loop = loop[1].split('&')[0]
+          if(loop == 'true') vid.loop = true
+        }else{
+          vid.loop = true
+        }
+        var playbackspeed = location.href.split('playbackspeed=')
+        if(playbackspeed.length > 1){
+          playbackspeed = playbackspeed[1].split('&')[0]
+        }else{
+          playbackspeed = 1
+        }
+        vid.playbackRate = vid.defaultPlaybackRate = playbackspeed
+        
+        var autoplay = location.href.split('autoplay=')
+        if(autoplay.length > 1){
+          autoplay = autoplay[1].split('&')[0]
+        }
+        vid.src = 'https://srmcgann.github.io/skyboxes/videos/starfield.mp4'
+        //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/pulse_darker.mp4'
+        //vid.src = 'https://srmcgann.github.io/skyboxes2/videos/tracks3.mp4'
+        //vid.src = 'https://srmcgann.github.io/skyboxes/videos/cuberoom_test.mp4'
+        //vid.src = 'https://srmcgann.github.io/skyboxes5/videos/cluds.mp4'
+        //vid.src = 'https://i.imgur.com/i69mR4O.mp4'
+        //vid.src = 'https://i.imgur.com/bvxtAbo.mp4'
+        if(autoplay){
+          vid.muted = true
+          vid.play()
+        }
+        background = new THREE.VideoTexture( vid )
+        backgroundType = 'video'
+        */
+        background = textureLoader.load( 'https://drawings.twilightparadox.com/rotated/34b3a55a0b163ae24362988c0caaf092.jpg' )
+        backgroundType = 'image'
+      }
+
+
+      var clouds = textureLoader.load('https://srmcgann.github.io/photography/fc402d02cd642483899593e8803319d1.jpg')
+      clouds.mapping = THREE.EquirectangularReflectionMapping
+      var burst = textureLoader.load('https://srmcgann.github.io/temp/burst.png')
+      var star1 = textureLoader.load('https://srmcgann.github.io/stars/star1.png')
+      var star2 = textureLoader.load('https://srmcgann.github.io/stars/star2.png')
+      var star3 = textureLoader.load('https://srmcgann.github.io/stars/star3.png')
+      var star4 = textureLoader.load('https://srmcgann.github.io/stars/star4.png')
+      var star5 = textureLoader.load('https://srmcgann.github.io/stars/star5.png')
+      var star6 = textureLoader.load('https://srmcgann.github.io/stars/star6.png')
+      var star7 = textureLoader.load('https://srmcgann.github.io/stars/star7.png')
+      var star8 = textureLoader.load('https://srmcgann.github.io/stars/star8.png')
+      var star9 = textureLoader.load('https://srmcgann.github.io/stars/star9.png')
+      var stars         = Array(9).fill().map((v,i)=>eval(`star${i+1}`))
+      var sprites = [burst, ...stars]
+
+      //background.colorSpace = THREE.SRGBColorSpace
+
+      background.mapping = THREE.EquirectangularReflectionMapping
+      background.anisotropy = renderer.capabilities.getMaxAnisotropy()
+      background.wrapS = THREE.RepeatWrapping
+      background.wrapT = THREE.RepeatWrapping
+      background.repeat.set( 1,  1)
+
+      texture = textureLoader.load( 'https://i.ibb.co/D5FCF6N/amap.png' )
+      //texture = textureLoader.load( 'https://boss.mindhackers.org/assets/uploads/2fbtcU.jpeg' )
+      texture.mapping = THREE.EquirectangularReflectionMapping  // if HDRI
+      //texture.colorSpace = THREE.SRGBColorSpace
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+      texture.wrapS = THREE.RepeatWrapping
+      texture.wrapT = THREE.RepeatWrapping
+      texture.repeat.set( 1, 1 )
+
+      shader = {
+        uniforms: baseUniforms = {
+          'baseTexture': { value: null },
+          'opacity': { value: 1.0 },
+          flyers: {value: sprites},
+          clipAlpha: {value: .25},
+          speed: {value: speed},
+          baseTexture: {value: texture },
+          mouse: {value: new THREE.Vector2(window.mx, window.my)},
+          t: { value: t },
+          gamma: { value: gamma },
+          genScale: { genScale: .33 },
+          pass: {value: -1},
+          passes: {value: -1},
+          finalRender: {value: 0},
+          resolution: { value: new THREE.Vector2(renderWidth, renderHeight) },
+        },
+        vertexShader: vs =
+          `varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+          }`,
+        fragmentShader: fs = 
+          `
+          #define M_PI 3.1415926535897932384626433832795
+          uniform float opacity;
+          uniform vec2 resolution;
+          uniform int finalRender;
+          uniform sampler2D flyers[15];
+          uniform sampler2D baseTexture;
+          uniform float t;
+          uniform float speed;
+          uniform float genScale;
+          uniform float pass;
+          uniform float passes;
+          uniform vec2 mouse;
+          uniform float gamma;
+          varying vec2 vUv;
+          uniform float clipAlpha;
+
+          float hypot (float a, float b){
+            return sqrt(a*a+b*b);
+          }
+
+          float atan2 (float a, float b) {
+            if(b > 0.0) return atan(a / b);
+            if(a == 0.0) return b < 0.0 ? M_PI : 0.0;
+            if(b < 0.0) return atan(a / b) + (a < 0.0 ? -M_PI : M_PI);
+            if(b == 0.0) return a < 0.0 ? -M_PI / 2.0 : M_PI / 2.0;
+          }
+
+          vec4 merge (vec4 col1, vec4 col2){
+            return vec4(col1.rgb * col1.a + col2.rgb * col2.a, 1.0);
+          }
+          
+          vec2 blackhole (float X2, float Y2) {
+            float p, d, X3, Y3;
+            float a = gl_FragCoord.x - X2;
+            float b = gl_FragCoord.y - Y2;
+            float d1 = hypot(a, b);
+            
+            float costheta = -.75;
+            float cz = 220.0 + costheta * 200.0;
+            float n = (200.0 / cz + 1.0) * genScale;
+            
+            //d = d1 - (n * 200.0 + n * 1e3 / (2.0 + pow(1.0 + d, 3.0)/1e3)) * 20.0 / cz / (1.0 + passes);
+            d = d1 - (n*200.0) / (1.0+pow(1.0+d1, 3.0)/1e6);
+            //d = max(0.0, d1-150.0 * genScale);
+            p = atan2(a, b);
+            X3 = min(resolution.x, max(0.0, X2 + sin(p) * d));
+            Y3 = min(resolution.y, max(0.0, Y2 + cos(p) * d));
+            return vec2(X3, Y3);
+          }
+
+          void main() {
+            vec2 vert = gl_FragCoord.xy/resolution.xy;
+            vec4 texel = texture2D( baseTexture, vUv );
+            vec4 col;
+            float X, Y, ls, p, d;
+            X = gl_FragCoord.x;
+            Y = gl_FragCoord.y;
+            ls = 250.0;
+            if(finalRender == 1){
+              float ax = (mouse.x - X);
+              float ay = (mouse.y - Y);
+              p = atan2(ax, ay) + t * 1.0 + pass;
+              d = hypot(ax, ay);
+              if(d < ls){
+                ax = sin(p) * d;
+                ay = cos(p) * d;
+                vec2 inVert = vec2((ax + ls/2.0) / ls,
+                                  (ay + ls/2.0) / ls);
+                vec4 col1 = texture2D( flyers[6], inVert);
+                if(col1.a >= clipAlpha){
+                  vec4 col2 = texel;
+                  col = merge(col1, col2);
+                  //vec4 col3 = texture2D( flyers[0], inVert);
+                  //col = merge(col, col3);
+                }else{
+                  vec2 inVert = blackhole(mouse.x, mouse.y);
+                  col = texture2D( baseTexture, inVert/resolution.xy / 1.0);
+                }
+              }else{
+                vec2 inVert = blackhole(mouse.x, mouse.y);
+                col = texture2D( baseTexture, inVert/resolution.xy / 1.0);
+              }
+              col = col * gamma;
+            }else{
+              if(passes != -1.0 && finalRender != 1){
+                p = M_PI * 2.0 / passes * pass + t / 1.5 * speed;
+                float X2 = resolution.x/2.0 + sin(p) * resolution.x / 4.0;
+                float Y2 = resolution.y/2.0 + sin(p*2.0) * resolution.y / 4.0;
+                float ax = (X2 - X);
+                float ay = (Y2 - Y);
+                p = atan2(ax, ay) + t * 1.0 + pass;
+                d = hypot(ax, ay);
+                if(d < ls){
+                  //vec4 col1 = vec4(1.0, 0.0, 0.0, 0.75);
+                  ax = sin(p) * d;
+                  ay = cos(p) * d;
+                  vec2 inVert = vec2((ax + ls/2.0) / ls,
+                                    (ay + ls/2.0) / ls);
+                  vec4 col1 = texture2D( flyers[6], inVert);
+                  if(col1.a >= clipAlpha){
+                    vec4 col2 = texel;
+                    col = merge(col1, col2);
+                    //vec4 col3 = texture2D( flyers[0], inVert);
+                    //col = merge(col, col3);
+                  }else{
+                    vec2 inVert = blackhole(X2, Y2);
+                    col = texture2D( baseTexture, inVert/resolution.xy);
+                  }
+                }else{
+                  vec2 inVert = blackhole(X2, Y2);
+                  col = texture2D( baseTexture, inVert/resolution.xy);
+                }
+              }else{
+                col = texel;
+              }
+            }
+            gl_FragColor = col * opacity;
+          }`
+      };
+      
+      var uniforms
+      
+      //material = new THREE.MeshBasicMaterial( {
+      uniforms = {}
+      Object.keys(baseUniforms).forEach((key, idx) => {
+        uniforms[key] = {value: baseUniforms[key].value}
       })
-      for(let i=10;i--;) setTimeout(()=>{rsz2(), rsz()}, i*60)
+      uniforms.baseTexture.value = background
+      uniforms.passes.value = -1
+      material = new THREE.ShaderMaterial( {
+        //map: background,
+        vertexShader: vs, fragmentShader: fs,
+        uniforms
+      })
+      geometry = new THREE.PlaneGeometry(640, 360)
+      material.side = THREE.DoubleSide;
+      material.blending = THREE.CustomBlending; 
+      mesh = new THREE.Mesh( geometry, material )
+      mesh.position.x = 0
+      mesh.position.y = 0
+      mesh.position.z = -386
+      scene.add( mesh );
+
+
+      /*//material = new THREE.MeshBasicMaterial( {
+      material = new THREE.ShaderMaterial( {
+        //map: texture,
+        vertexShader: vs, fragmentShader: fs,
+        uniforms: baseUniforms
+      })
+      geometry = new THREE.PlaneGeometry(50, 50)
+      */
+      
+      var cl = 3
+      var rw = 1
+      var br = 2
+      var sp = 40
+      var ofz = 100
+      geometry = new TeapotGeometry( 10, 5)
+      Array(cl*rw*br).fill().map((v,i) => {
+        var ox = ((i%cl)-cl/2 + .5) * sp
+        var oy = (((i/cl|0)%rw)-rw/2 + .5) * sp
+        var oz = ((i/cl/rw|0)-br/2 + .5) * sp
+        material = new THREE.MeshPhongMaterial({
+            specular: 0xffffff,
+            shininess: 20,
+            flatShading: false,
+            envMap: background,
+            reflectivity: 1,
+            //map: texture,
+            side: THREE.DoubleSide,
+            //alphaMap: texture,
+            //color: 0xffffff,
+            transparent: true,
+        })
+        if(backgroundType == 'image') material.envMap = background
+        if(backgroundType == 'video') material.envMap = clouds
+        material.blending = THREE.CustomBlending; 
+        mesh = new THREE.Mesh( geometry, material )
+        mesh.name = 'teapot'
+        mesh.position.x = ox
+        mesh.position.y = oy
+        mesh.position.z = oz - ofz
+        scene.add( mesh );
+      })
+
+
+      uniforms = {}
+      Object.keys(baseUniforms).forEach((key, idx) => {
+        uniforms[key] = {value: baseUniforms[key].value}
+      })
+      //uniforms.baseTexture.value = finalRender.texture
+      uniforms.opacity.value = 1.0
+      uniforms.genScale.value = .2
+      var finalMaterial = new THREE.ShaderMaterial( {
+        vertexShader: vs, fragmentShader: fs,
+        uniforms
+      })
+      geometry = new THREE.PlaneGeometry(.5, .5/(16/9))
+      mesh = new THREE.Mesh( geometry, finalMaterial )
+      mesh.name = 'final'
+      mesh.position.x = 0
+      mesh.position.y = 0
+      mesh.position.z = -.3
+      finalScene.add( mesh );
+
+      var draw = () => {
+      
+        t += 1/60
+        let ar = [
+          ...scene.children.filter(v=>v.type == 'Mesh'),
+          ...finalScene.children.filter(v=>v.type == 'Mesh'),
+        ]
+        ar.map((el, idx) => {
+          switch(el.name){
+            case 'final':
+              //el.position.x += Math.cos(t/2)/200
+              //el.position.y = -.2
+            break
+            case 'teapot':
+              if(idx){
+                el.rotation.z += Math.cos((idx+t) * speed) * .02 * speed
+                el.rotation.y += Math.sin((idx+t) * speed) * .02 * speed
+                
+                let X = el.position.x
+                let Y = el.position.y
+                let Z = el.position.z + ofz
+                let p = Math.atan2(Y, Z) + Math.cos(t/8) * .02
+                let d = Math.hypot(Y, Z)
+                el.position.y = Math.sin(p) * d
+                el.position.z = Math.cos(p) * d - ofz
+              }
+            default:
+            break
+              if(idx){
+                el.rotation.z += .0025
+                el.rotation.y += .025
+              }
+            break
+          }
+          if(typeof el.material?.uniforms?.mouse != 'undefined'){
+            el.material.uniforms.mouse.value.x = window.mx;
+            el.material.uniforms.mouse.value.y = (window.can.height - window.my);
+            el.material.uniforms.t.value = t
+          }
+        })
+
+        renderer.setRenderTarget(renderTargets[0])
+        //renderer.setRenderTarget(null)
+        renderer.render(scene, camera)
+        
+        var sd = abomCt
+        
+        uniforms.passes.value = sd
+        uniforms.t.value = t  //performance.now() / 1000
+        uniforms.finalRender.value = -1
+
+        renderTargets.map((renderTarget, i) => {
+          if(i < renderTargets.length -1){
+            uniforms.baseTexture.value = renderTarget.texture
+            uniforms.pass.value = i
+            renderer.setRenderTarget(renderTargets[i+1])
+            renderer.render(finalScene, camera)
+          }
+        })
+
+        uniforms.finalRender.value = 1
+        uniforms.baseTexture.value = renderTargets[renderTargets.length-1].texture
+        uniforms.mouse.value.x = window.mx;
+        uniforms.mouse.value.y = window.can.height - window.my;
+        renderer.setRenderTarget(null)
+        renderer.render(finalScene, camera)
+        
+
+        requestAnimationFrame(draw)
+      }
+      
+      draw()
     </script>
   </body>
 </html>
