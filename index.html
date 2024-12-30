@@ -49,7 +49,7 @@
         font-size: .75em;
         color: #fffc;
         margin: 5px;
-        text-align: justify;
+        /*text-align: justify;*/
         border: 1px solid #8cf2;
         padding: 3px;
       }
@@ -147,6 +147,79 @@
       </div>
 
       <div class="card">
+        <b class="title">cantelope links
+          <!--
+          <button
+            disabled onclick="handleInput({keyCode: 13}, 'wordleSolver', '')"
+            title="use links below"
+          >launch</button>
+          -->
+        </b>
+        <br>
+        <div class="desc">
+          <br>
+          <a href ="https://roadtrip.twilightparadox.com/" target="_blank" class="playlistLink">roadtrip (random)</a><br>
+          <a href ="https://orbital.twilightparadox.com/" target="_blank" class="playlistLink">orbital</a><br>
+          <a href ="https://winehouse.twilightparadox.com/" target="_blank" class="playlistLink">amy winehouse</a><br>
+          <a href ="https://eighties.twilightparadox.com/" target="_blank" class="playlistLink">eighties music</a><br>
+          <a href ="https://mixedup.twilightparadox.com/" target="_blank" class="playlistLink">mixed up - the cure</a><br>
+          <a href ="https://depechemode.twilightparadox.com/" target="_blank" class="playlistLink">depeche mode</a><br>
+          <a href ="https://flowerface.twilightparadox.com/" target="_blank" class="playlistLink">flower face</a><br>
+          <a href ="https://whr.twilightparadox.com/" target="_blank" class="playlistLink">whitehot robot songs</a><br>
+          <a href ="https://vids.twilightparadox.com/" target="_blank" class="playlistLink">whitehot robot music videos</a><br>
+          <a href ="https://roadtrip.twilightparadox.com/aion/" target="_blank" class="playlistLink">aion - dead can dance</a><br>
+          <a href ="https://gifs.twilightparadox.com/" target="_blank" class="playlistLink">gifs</a><br>
+          <a href ="https://drawings.twilightparadox.com/" target="_blank" class="playlistLink">drawings</a><br>
+          <a href ="https://srmcgann.github.io/photography/" target="_blank" class="playlistLink">photography</a><br>
+          <br>
+          <center>No login is required</center><br>
+          <div style="clear: both;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <b class="title">ABOMINATOR
+          <button onclick="handleInput({keyCode: 13}, 'abominator', '')">launch</button>
+        </b>
+        <br>
+        <input type="text" class="textInput" placeholder="or launch with URL... type or paste, then hit enter" autofocus
+          onkeydown="handleInput(event, 'abominator', this)"
+        >
+        <div class="desc">
+          a tool for making an image or video ABOMINABLE, with<br>
+          <div class="thumbContainer">
+            <video
+              onclick="handleInput({keyCode: 13}, 'abominator', '')"
+              src="abominator.mp4"
+              muted=true
+              autoplay=true
+              loop=true
+              class="thumbnail"
+              width="240px"
+              title="example texture"
+            ></video><br>
+            <font style="font-size: .7em;">example texture</font>
+          </div>
+          audio, auto-detected. This tool forces user interaction if the resource is a video, required by modern browsers for playing audio.<br><br>
+          <br><br>
+          &nbsp; URL cheatsheet<br>
+             &nbsp;               e.g. <b>... /?url=res.jpg&flyers=3&random&speed=2 ...<br><br></b>
+             <font style="color: #ff0;">
+             &nbsp; flyers        - number of ABOMINATORS [0 - 15]<br>
+             &nbsp; flyersize     - size of ABOMINATORS [0 - inf]<br>
+             &nbsp; speed         - animation master throttle [0 - inf]<br>
+             &nbsp; genScale      - default level of distortion [0 - 1] <br>
+             &nbsp; random        - random ABOMINATOR motion paths<br>
+             &nbsp; gamma         - adjust brightness [0 - inf] <br>
+             &nbsp; url           - link to custom resource [image or video]<br>
+             &nbsp; playbackspeed - if video, speed [1 = normal, 0 - 10] <br>
+             &nbsp; loop          - if video, loop [true (default) or false]<br>
+             &nbsp; autoplay      - if video, play muted, no button prompt<br>
+           </font>
+        </div>
+      </div>
+
+      <div class="card">
         <b class="title">HDRI
           <button onclick="handleInput({keyCode: 13}, 'HDRI', '')">launch</button>
         </b>
@@ -195,35 +268,6 @@
             <font style="font-size: .7em;">example texture</font>
           </div>
            audio, potentially. This tool forces user interaction, required by modern browsers for playing audio.
-          <div style="clear: both;"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <b class="title">ABOMINATOR
-          <button onclick="handleInput({keyCode: 13}, 'abominator', '')">launch</button>
-        </b>
-        <br>
-        <input type="text" class="textInput" placeholder="or launch with URL... type or paste, then hit enter" autofocus
-          onkeydown="handleInput(event, 'abominator', this)"
-        >
-        <div class="desc">
-          a tool for making an image or video ABOMINABLE, with<br>
-          <div class="thumbContainer">
-            <video
-              onclick="handleInput({keyCode: 13}, 'abominator', '')"
-              src="https://i.imgur.com/lxCuPJN.mp4"
-              muted=true
-              autoplay=true
-              loop=true
-              class="thumbnail"
-              width="240px"
-              title="example texture"
-            ></video><br>
-            <font style="font-size: .7em;">example texture</font>
-          </div>
-           audio, auto-detected. This tool forces user interaction if the resource is a video, required by modern browsers for playing audio.<br><br>
-           you can append '&res=x' to adjust resolution/performance, where less is more (default: 3)
           <div style="clear: both;"></div>
         </div>
       </div>
@@ -418,39 +462,6 @@
           <div style="clear: both;"></div>
         </div>
       </div>
-
-      <div class="card">
-        <b class="title">cantelope links
-          <!--
-          <button
-            disabled onclick="handleInput({keyCode: 13}, 'wordleSolver', '')"
-            title="use links below"
-          >launch</button>
-          -->
-        </b>
-        <br>
-        <div class="desc">
-          <br>
-          <a href ="https://roadtrip.twilightparadox.com/" target="_blank" class="playlistLink">roadtrip (random)</a><br>
-          <a href ="https://orbital.twilightparadox.com/" target="_blank" class="playlistLink">orbital</a><br>
-          <a href ="https://winehouse.twilightparadox.com/" target="_blank" class="playlistLink">amy winehouse</a><br>
-          <a href ="https://eighties.twilightparadox.com/" target="_blank" class="playlistLink">eighties music</a><br>
-          <a href ="https://mixedup.twilightparadox.com/" target="_blank" class="playlistLink">mixed up - the cure</a><br>
-          <a href ="https://depechemode.twilightparadox.com/" target="_blank" class="playlistLink">depeche mode</a><br>
-          <a href ="https://flowerface.twilightparadox.com/" target="_blank" class="playlistLink">flower face</a><br>
-          <a href ="https://whr.twilightparadox.com/" target="_blank" class="playlistLink">whitehot robot songs</a><br>
-          <a href ="https://vids.twilightparadox.com/" target="_blank" class="playlistLink">whitehot robot music videos</a><br>
-          <a href ="https://roadtrip.twilightparadox.com/aion/" target="_blank" class="playlistLink">aion - dead can dance</a><br>
-          <a href ="https://gifs.twilightparadox.com/" target="_blank" class="playlistLink">gifs</a><br>
-          <a href ="https://drawings.twilightparadox.com/" target="_blank" class="playlistLink">drawings</a><br>
-          <a href ="https://srmcgann.github.io/photography/" target="_blank" class="playlistLink">photography</a><br>
-          <br>
-          <center>No login is required</center><br>
-          <div style="clear: both;"></div>
-        </div>
-      </div>
-
-
     </div>
 
     <script>
@@ -487,4 +498,3 @@
     </script>
   </body>
 </html>
-
