@@ -382,7 +382,6 @@
           }
 
           float atan2 (float a, float b) {
-            return atan(a, b);
             if(a == 0.0) return b < 0.0 ? M_PI : 0.0;
             if(b == 0.0) return a < 0.0 ? -M_PI / 2.0 : M_PI / 2.0;
             if(b > 0.0) return atan(a / b);
