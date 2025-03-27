@@ -70,8 +70,6 @@
       ]
       var videoShader = await Coordinates.BasicShader(renderer, shaderOptions)
       
-      console.log(videoShader)
-
 
       var shapes = []
 
@@ -91,9 +89,8 @@
       
       
       var url = 'https://i.imgur.com/gFNPd1m.mp4'
-      var url = 'https://i.imgur.com/bdSsHeF.mp4'
       var l
-      if((l=location.href.toLowerCase().split('url=')).length>1){
+      if((l=location.href.split('url=')).length>1){
         url = l[1].split('&')[0]
       }
       
@@ -159,8 +156,6 @@
       }
       
       
-      //var url = 'https://srmcgann.github.io/photography/26914a805685f69ed9dabb945fc89552.jpg'
-      //var url = 'https://srmcgann.github.io/photography/84a5461cbdb0480b712bb5be797d3a94.jpg'
       var ready = false
       var p, q, d, P = [], w, h
       var geoData      = []
