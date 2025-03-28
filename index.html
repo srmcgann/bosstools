@@ -316,6 +316,40 @@
       </div>
 
       <div class="card">
+        <b class="title">SANDS
+          <button onclick="handleInput({keyCode: 13}, 'abominator', '')">launch</button>
+        </b>
+        <br>
+        <input type="text" class="textInput" placeholder="or launch with URL... type or paste, then hit enter" autofocus
+          onkeydown="handleInput(event, 'sands', this)"
+        >
+        <div class="desc">
+          a tool for making an image or video SANDY, with<br>
+          <div class="thumbContainer">
+            <video
+              onclick="handleInput({keyCode: 13}, 'sands', '')"
+              src="sands.mp4"
+              muted=true
+              autoplay=true
+              loop=true
+              class="thumbnail"
+              width="240px"
+              title="example texture"
+            ></video><br>
+            <font style="font-size: .7em;">example texture</font>
+          </div>
+          audio, auto-detected. This tool forces user interaction if the resource is a video, required by modern browsers for playing audio.<br><br>
+          <br><br>
+          <!-- &nbsp; URL cheatsheet<br>
+             &nbsp;               e.g. <b>... /?url=res.jpg&flyers=3&random&speed=2 ...<br><br></b>
+             <font style="color: #ff0;">
+             &nbsp; flyers        - number of ABOMINATORS [0 - 15]<br>
+           </font> -->
+        </div>
+      </div>
+      
+
+      <div class="card">
         <b class="title">SHORTY
           <button onclick="handleInput({keyCode: 13}, 'shorty', '')">launch</button>
         </b>
