@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=800,initial-scale=1.5">
+    <title>equirectangular re-mapper</title>
+    <link rel="icon" href="./favicon.png">
+    <style>
+      body, html{
+        background: #000;
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+      .overlay{
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        opacity: .7;
+        z-index: 10000;
+      }
+      .overlayContent{
+        object-fit: contain;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay">
+      <video
+        id="loadingVideo"
+        class="overlayContent"
+        loop autoplay muted
+        src="./loading.mp4"
+      ></video>
+    </div>
+    <script type="module">
+    
+      var S = Math.sin
+      var C = Math.cos
+      var Rn = Math.random
+      var refTexture = url
+      var shader, geoOptions
+      var urlParts, probe
+      
+      
+      import * as Coordinates from
+      "./coordinates.min.js"
+    
+      var l = location.href.toLowerCase().split('url=')
+      var url
+      if(l.length>1){
+        url = location.href.split('url=')[1].split('&')[0]
+      }else{
+        url = 'https://srmcgann.github.io/skyboxes3/HDRI/treehouses.jpg'
+      }
+      
+      var l = location.href.toLowerCase().split('plugin=')
+      var plugin
+      if(l.length>1){
+        plugin = !!eval(location.href.toLowerCase().split('plugin=')[1].split('&')[0])
+      }else{
+        plugin = true
+      }
+      
+      var l = location.href.toLowerCase().split('muted=')
+      var muted
+      if(l.length>1){
+        muted = !!eval(location.href.toLowerCase().split('muted=')[1].split('&')[0])
+      }else{
+        muted = true
+      }
+      
+      var l = location.href.toLowerCase().split('playbackspeed=')
+      var playbackSpeed
+      if(l.length>1){
+        playbackSpeed = +location.href.toLowerCase().split('playbackspeed=')[1].split('&')[0]
+      }else{
+        playbackSpeed = 1
+      }
+      
+      var l = location.href.toLowerCase().split('fov=')
+      var fov
+      if(l.length>1){
+        fov = +location.href.toLowerCase().split('fov=')[1].split('&')[0]
+      }else{
+        fov = 300
+      }
+      
+      var l = location.href.toLowerCase().split('ambientlight=')
+      var ambientLight
+      if(l.length>1){
+        ambientLight = +location.href.toLowerCase().split('ambientlight=')[1].split('&')[0]
+      }else{
+        ambientLight= .4
+      }
+      
+      var rendererOptions = {
+        ambientLight, fov,
+        margin: 0,
+        plugins: [
+          {
+            type: 'post processing',
+            value: 'equirectangular',
+          }
+        ],
+      }
+      var renderer = await Coordinates.Renderer(rendererOptions)
+
+      Coordinates.AnimationLoop(renderer, 'Draw')
+
+      var shapes = []
+      var resourceType
+
+      var refTexture = url
+      var shader, geoOptions
+      var urlParts, probe
+      
+      var launch = async (width, height) => {
+        var ar = width / height
+        width = Math.min(1e3, width)
+        height = width / ar
+        await Coordinates.ResizeRenderer(renderer, width, height)
+        renderer.fov = Math.hypot(width, height) / 2
+        renderer.optionalPlugins[0].enabled = plugin
+
+        var shaderOptions = [
+          { uniform: {
+            type: 'phong',
+            value: .75
+          } }
+        ]
+        shader = await Coordinates.BasicShader(renderer, shaderOptions)
+
+        geoOptions = {
+          shapeType: 'custom shape',
+          name: 'background',
+          equirectangular: true,
+          url: 'https://srmcgann.github.io/Coordinates/custom shapes/icosahedron_sphere_medres.json',
+          map: refTexture,
+          muted,
+          playbackSpeed,
+          color: 0xffffff,
+          colorMix: 0,
+        }
+        await Coordinates.LoadGeometry(renderer, geoOptions).then(async (geometry) => {
+          shapes.push(geometry)
+        })
+        
+        document.querySelectorAll('.overlay').forEach(e => e.style.display = 'none')
+        loadingVideo.pause()
+      }
+
+      urlParts = url.toLowerCase().split('.')
+      switch(urlParts[urlParts.length - 1]){
+        case 'jpg': case 'jpeg': case 'png': case 'bmp': case 'webp': case 'gif':
+          resourceType = 'image'
+        break
+        case 'mp4': case 'mkv': case 'ogv': case 'webm': case 'avi':
+          resourceType = 'video'
+        break
+      }
+      
+      await fetch(url).then(res=>res.blob()).then(data => {
+        switch(resourceType){
+          case 'image':
+            probe = new Image()
+            probe.onload = async () => await launch(probe.width, probe.height)
+          break
+          case 'video':
+            probe = document.createElement('video')
+            probe.onloadedmetadata = async () => await launch(probe.videoWidth, probe.videoHeight)
+          break
+        }
+        probe.src = URL.createObjectURL(data)
+      })
+
+      Coordinates.LoadFPSControls(renderer, {
+        mSpeed: 0,
+        focusRequiredForMouse: false,
+        showCrosshair: false
+      })
+      
+      window.onmousewheel = e => {
+        var newFOV = renderer.fov
+        newFOV += e.wheelDelta * (1+newFOV / 100) / 20
+        renderer.fov = Math.min(20000, Math.max(100, newFOV))
+      }
+      
+      window.onkeyup = e => {
+        if(e.keyCode == 69){
+          renderer.optionalPlugins[0].enabled = !renderer.optionalPlugins[0].enabled
+        }
+      }
+      
+      window.Draw = () => {
+        renderer.z = 0
+        shapes.forEach(shape => {
+          var t = renderer.t
+          renderer.Draw(shape)
+        })
+      }
+    </script>
+  </body>
+</html>
