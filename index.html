@@ -316,6 +316,48 @@
       </div>
 
       <div class="card">
+        <b class="title">REMAPPER
+          <button onclick="handleInput({keyCode: 13}, 'remapper', '')">launch</button>
+        </b>
+        <br>
+        <input type="text" class="textInput" placeholder="or launch with URL... type or paste, then hit enter" autofocus
+          onkeydown="handleInput(event, 'remapper', this)"
+        >
+        <div class="desc">
+          HDRI explorer, in shader with optional switching between equirectangular and env map views. see: URL switches below.<br>
+          <div class="thumbContainer">
+            <video
+              onclick="handleInput({keyCode: 13}, 'remapper', '')"
+              src="remapper.mp4"
+              muted=true
+              autoplay=true
+              loop=true
+              class="thumbnail"
+              width="240px"
+              title="example texture"
+            ></video><br>
+            <font style="font-size: .7em;">example texture</font>
+          </div>
+          <br><br>accepts image or video<br><br>
+          <br><br>
+          <br><br>
+          <br>
+          &nbsp; URL cheatsheet / optional<br>
+             &nbsp;               e.g. <b>... /?url=res.jpg&=3&random&speed=2 ...<br><br></b>
+             <font style="color: #ff0;">
+             &nbsp;url            - resource URL<br>
+             &nbsp;plugin         - camera mode, hotkey=e<br>
+             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; equirectangular / normal  [true / false]<br>
+             &nbsp;muted          - for videos, optional audio prompt [true / false]<br>
+             &nbsp;playbackspeed  - for videos [.1 to 10.0]<br>
+             &nbsp;fov            - field of vision<br>
+             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for normal view [100 (wide) to 10000 (ortho)] <br>
+             &nbsp;ambientLight   - gamma boost / cut [0 to 10...]<br>
+           </font>
+        </div>
+      </div>
+      
+      <div class="card">
         <b class="title">SANDS
           <button onclick="handleInput({keyCode: 13}, 'sands', '')">launch</button>
         </b>
