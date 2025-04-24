@@ -1612,6 +1612,7 @@ const LoadGeometry = async (renderer, geoOptions) => {
 const GenericPopup = async (msg='', isPrompt=false, callback=()=>{},
                              width=400, height= 300) => {
   var popup = document.createElement('div')
+  popup.className = 'genericPopup'
   popup.style.position = 'fixed'
   popup.style.zIndex = 100000
   popup.style.left = '50%'
@@ -4839,7 +4840,8 @@ const LoadFPSControls = async (renderer, options) => {
         mbutton = true
         //jump()
         //renderer.c.requestFullscreen()
-        renderer.c.requestPointerLock({unadjustedMovement: true})
+        var el = document.querySelectorAll('.genericPopup')
+        if(!el.length) renderer.c.requestPointerLock({unadjustedMovement: true})
       }
     })
     window.addEventListener('mouseup', e => {
